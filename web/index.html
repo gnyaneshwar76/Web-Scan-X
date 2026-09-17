@@ -1,0 +1,266 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>WebScanX — Find your vulnerabilities before they do</title>
+<meta name="description" content="A local scanner that finds web vulnerabilities and explains each one in plain language. Nothing leaves your device.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=JetBrains+Mono:wght@400;500;700&family=Space+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="style.css">
+<style>
+  body { font-size: 16px; overflow-x: clip; }
+  .wrap { max-width: 1200px; margin: 0 auto; padding-inline: 24px; }
+  main > section { padding-block: 128px; }
+  .eyebrow { font: 500 12px var(--mono); letter-spacing: .14em; text-transform: uppercase; color: var(--text2); margin: 0 0 16px; }
+  h2.big { font-size: clamp(34px, 5vw, 56px); line-height: 1.05; letter-spacing: -.03em; margin: 0; }
+  .center { text-align: center; }
+
+  /* nav */
+  .nav { position: sticky; top: 0; z-index: 20; background: rgb(13 12 12 / .85); backdrop-filter: blur(8px); border-bottom: 1px solid var(--rule); }
+  .nav .wrap { display: flex; align-items: center; height: 64px; gap: 32px; }
+  .logo { font: 700 17px var(--mono); text-decoration: none; }
+  .nav ul { display: flex; gap: 28px; list-style: none; margin: 0 auto; padding: 0; }
+  .nav ul a { color: var(--text2); text-decoration: none; font-size: 14px; }
+  .nav ul a:hover { color: var(--text); }
+
+  /* hero */
+  .hero { position: relative; padding: 112px 0 0; overflow: hidden; text-align: center; }
+  .hero::before { content: ""; position: absolute; inset: -20% -10% auto; height: 900px; pointer-events: none;
+    background: radial-gradient(ellipse 50% 40% at 50% 35%, rgb(34 211 166 / .09), transparent 70%),
+      radial-gradient(circle at 50% 30%, rgb(255 255 255 / .03), transparent 60%); }
+  .hero > * { position: relative; }
+  .hero h1 { font-size: clamp(36px, 8vw, 96px); line-height: .98; letter-spacing: -.045em; margin: 0 auto; max-width: 960px; overflow-wrap: anywhere; }
+  .hero h1 span { color: var(--text2); display: block; }
+  .hero .lede { font-size: clamp(17px, 2vw, 20px); color: var(--text2); max-width: 580px; margin: 28px auto 0; }
+  .cta { display: flex; flex-wrap: wrap; justify-content: center; align-items: center; gap: 12px 20px; margin-top: 40px; }
+  .cta .ver { font: 12px var(--mono); color: var(--muted); }
+  .linkarrow { color: var(--text); text-decoration: none; font-weight: 500; }
+  .linkarrow:hover { color: var(--mint); }
+  .stage { perspective: 1800px; margin-top: 80px; }
+  .tilt { transform: rotateX(18deg); transform-origin: 50% 0; max-width: 1160px; margin: 0 auto; height: 560px; overflow: hidden;
+    -webkit-mask-image: linear-gradient(#000 55%, transparent); mask-image: linear-gradient(#000 55%, transparent); }
+  .tilt .report { height: 720px; pointer-events: none; text-align: left; }
+
+  /* statement + marquee */
+  .statement { font-size: clamp(26px, 3.6vw, 44px); line-height: 1.2; letter-spacing: -.02em; max-width: 920px; margin: 0 auto; text-align: center; font-weight: 600; color: var(--muted); }
+  .statement b { color: var(--text); font-weight: 600; }
+  .marquee { overflow: hidden; margin-top: 64px; -webkit-mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); mask-image: linear-gradient(90deg, transparent, #000 10%, #000 90%, transparent); }
+  .marquee div { display: flex; gap: 56px; width: max-content; animation: slide 40s linear infinite; font: 13px var(--mono); letter-spacing: .14em; color: var(--muted); white-space: nowrap; }
+  .marquee:hover div { animation-play-state: paused; }
+  @keyframes slide { to { transform: translateX(-50%); } }
+
+  /* steps */
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 48px; margin-top: 64px; }
+  .step { border-top: 1px solid var(--rule); padding-top: 24px; display: flex; flex-direction: column; }
+  .step .n { font: 500 20px var(--mono); color: var(--muted); }
+  .step h3 { font-size: 22px; margin: 16px 0 8px; }
+  .step p { color: var(--text2); margin: 0 0 24px; }
+  .frag { margin-top: auto; border: 1px solid var(--rule); background: var(--surface); padding: 14px; font: 13px var(--mono); }
+  .frag .row { display: flex; align-items: center; gap: 10px; padding: 6px 0; font-family: var(--sans); font-size: 13px; }
+  .frag .row + .row { border-top: 1px solid var(--rule); }
+  .frag label { display: flex; gap: 10px; align-items: center; margin-top: 10px; font: 13px var(--sans); color: var(--text2); cursor: pointer; }
+
+  /* sample report */
+  #sample .report { height: 760px; margin-top: 56px; }
+  .samplelinks { display: flex; justify-content: center; gap: 28px; margin-top: 24px; }
+
+  /* checks list */
+  .checklist { margin-top: 56px; border-top: 1px solid var(--rule); }
+  .check-row { display: grid; grid-template-columns: 1fr 2fr; gap: 24px; padding: 28px 8px; border-bottom: 1px solid var(--rule); transition: background .15s; }
+  .check-row:hover { background: var(--surface); }
+  .check-row h3 { margin: 0; font-size: 26px; letter-spacing: -.01em; }
+  .check-row p { margin: 0; color: var(--text2); font-size: 17px; }
+  .check-row:hover p { color: var(--text); }
+  .check-row small { display: block; margin-top: 6px; font: 12px var(--mono); color: var(--muted); }
+
+  /* trust */
+  .trust { display: grid; grid-template-columns: 1fr 1fr; gap: 56px 80px; max-width: 980px; margin: 72px auto 0; }
+  .trust h3 { margin: 10px 0 6px; font-size: 20px; }
+  .trust p { margin: 0; color: var(--text2); }
+
+  /* download */
+  .platforms { display: grid; grid-template-columns: repeat(3, 1fr); margin-top: 56px; border-block: 1px solid var(--rule); }
+  .platform { padding: 32px 28px; border-right: 1px solid var(--rule); }
+  .platform:last-child { border-right: 0; }
+  .platform h3 { margin: 0; font-size: 28px; }
+  .platform .meta { font: 12px var(--mono); color: var(--text2); margin: 6px 0 20px; }
+  .sha { display: flex; justify-content: space-between; align-items: center; gap: 8px; margin-top: 20px; padding-top: 14px; border-top: 1px solid var(--rule); font: 11px var(--mono); color: var(--muted); }
+  .sha button { position: static; }
+  .pip { display: inline-flex; align-items: center; gap: 16px; margin-top: 40px; border: 1px solid var(--rule); background: var(--surface); padding: 10px 10px 10px 16px; font: 14px var(--mono); }
+  .pip .copy { position: static; }
+  .smalllinks { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px 28px; margin-top: 20px; font-size: 14px; }
+  .smalllinks a { color: var(--text2); } .smalllinks a:hover { color: var(--text); }
+
+  /* faq */
+  .faq { margin-top: 48px; border-top: 1px solid var(--rule); }
+  .faq details { border-bottom: 1px solid var(--rule); }
+  .faq summary { list-style: none; display: flex; justify-content: space-between; gap: 16px; padding: 24px 0; font-size: 20px; cursor: pointer; }
+  .faq summary::-webkit-details-marker { display: none; }
+  .faq summary::after { content: "+"; font: 20px var(--mono); color: var(--text2); }
+  .faq details[open] summary::after { content: "−"; }
+  .faq details p { margin: 0 0 24px; color: var(--text2); max-width: 760px; }
+
+  /* footer */
+  footer { border-top: 1px solid var(--rule); padding-top: 64px; overflow: hidden; }
+  .fgrid { display: grid; grid-template-columns: 2fr 1fr 1fr 1fr; gap: 32px; }
+  .fgrid h4 { font: 600 11px var(--mono); letter-spacing: .1em; text-transform: uppercase; color: var(--muted); margin: 0 0 14px; }
+  .fgrid ul { list-style: none; margin: 0; padding: 0; } .fgrid li { margin-bottom: 8px; }
+  .fgrid a { color: var(--text2); text-decoration: none; font-size: 14px; } .fgrid a:hover { color: var(--text); }
+  .fbottom { margin-top: 48px; padding-top: 20px; border-top: 1px solid var(--rule); font: 12px var(--mono); color: var(--muted); }
+  .wordmark { font: 700 clamp(64px, 17vw, 240px)/0.8 var(--sans); letter-spacing: -.05em; color: var(--surface); text-align: center; margin-top: 40px; user-select: none; }
+
+  @media (max-width: 900px) {
+    main > section { padding-block: 88px; }
+    .nav ul { display: none; } .nav .btn { margin-left: auto; }
+    .stage { margin-top: 56px; } .tilt { height: 380px; transform: rotateX(12deg); }
+    .steps, .platforms { grid-template-columns: 1fr; gap: 0; }
+    .step { padding-bottom: 40px; } .platform { border-right: 0; border-bottom: 1px solid var(--rule); } .platform:last-child { border-bottom: 0; }
+    .check-row { grid-template-columns: 1fr; gap: 8px; }
+    .trust { grid-template-columns: 1fr; gap: 40px; }
+    #sample .report { height: auto; }
+    .fgrid { grid-template-columns: 1fr 1fr; }
+  }
+</style>
+</head>
+<body>
+<header class="nav"><div class="wrap">
+  <a class="logo" href="#top">WebScanX</a>
+  <ul><li><a href="#how">How it works</a></li><li><a href="#sample">Sample report</a></li><li><a href="#checks">What it checks</a></li><li><a href="docs.html" data-soon>Docs</a></li><li><a href="https://github.com/" data-soon>GitHub</a></li></ul>
+  <a class="btn btn-primary" href="#download">Download</a>
+</div></header>
+
+<main id="top">
+  <div class="hero wrap">
+    <p class="eyebrow">Open-source · Runs 100% locally</p>
+    <h1>Find your vulnerabilities <span>before they do.</span></h1>
+    <p class="lede">A local scanner that finds web vulnerabilities and explains each one in plain language. Nothing leaves your device.</p>
+    <div class="cta">
+      <a class="btn btn-primary btn-lg" href="#download" data-platform-btn>Download for Windows</a>
+      <span class="ver">v1.0 · 24 MB</span>
+      <a class="linkarrow" href="app.html">Try the dashboard →</a>
+    </div>
+    <div class="stage" aria-hidden="true"><div class="tilt"><div id="heroReport" inert></div></div></div>
+  </div>
+
+  <section style="padding-top:40px">
+    <p class="statement wrap"><b>WebScanX finds web vulnerabilities,</b> explains them <b>like a colleague would,</b> and <b>never sends a byte off your machine.</b></p>
+    <div class="marquee" aria-label="Checks: security headers, TLS, XSS, SQL injection, CSRF, cookies, CORS, CSP, open redirects">
+      <div aria-hidden="true"></div>
+    </div>
+  </section>
+
+  <section id="how" class="wrap">
+    <p class="eyebrow">How it works</p>
+    <h2 class="big">Three steps. No account. No cloud.</h2>
+    <div class="steps">
+      <div class="step"><span class="n">01</span><h3>Download</h3><p>One file for your system, or pip install. Nothing else to install.</p>
+        <pre class="code" style="margin-top:auto">$ webscanx start<button class="copy" data-copy="webscanx start" aria-label="Copy command" title="Copy">⧉</button></pre></div>
+      <div class="step"><span class="n">02</span><h3>Point it at your site</h3><p>Paste a URL you're allowed to test and confirm you're authorized.</p>
+        <div class="frag"><input class="input" style="width:100%" value="https://staging.example.com" aria-label="Example target" readonly>
+          <label><input class="check" type="checkbox" checked> I am authorized to scan this target</label></div></div>
+      <div class="step"><span class="n">03</span><h3>Read the report</h3><p>Every finding explained: what it is, how to check it, how to fix it.</p>
+        <div class="frag"><div class="row"><span class="pill high">high</span>Reflected XSS in ?q parameter</div>
+          <div class="row"><span class="pill medium">medium</span>Cookie without Secure flag</div>
+          <div class="row"><span class="pill low">low</span>Missing X-Content-Type-Options</div></div></div>
+    </div>
+  </section>
+
+  <section id="sample" class="wrap">
+    <div class="center"><p class="eyebrow">Sample report</p><h2 class="big">This is exactly what you get.</h2>
+      <p class="text2" style="margin-top:16px">A real scan of our demo target. Click any finding.</p></div>
+    <div id="sampleReport"></div>
+    <div class="samplelinks"><a class="linkarrow" href="#" data-sample="md">Download sample Markdown →</a><a class="linkarrow" href="#" data-sample="json">Download sample JSON →</a></div>
+  </section>
+
+  <section id="checks" class="wrap">
+    <p class="eyebrow">What it checks</p>
+    <h2 class="big">Five checks. Every finding explained.</h2>
+    <div class="checklist">
+      <div class="check-row"><h3>XSS</h3><p>Finds places where your site echoes input back as code a visitor's browser would run.<small>reflected · stored · DOM</small></p></div>
+      <div class="check-row"><h3>Security headers</h3><p>Checks the protective headers your server should send with every page.<small>CSP · HSTS · X-Frame-Options</small></p></div>
+      <div class="check-row"><h3>TLS / certificates</h3><p>Checks your HTTPS setup for old protocols and expiring certificates.<small>TLS 1.0 · ciphers · expiry</small></p></div>
+      <div class="check-row"><h3>SQL injection</h3><p>Finds inputs that can reach your database and change its queries.<small>error-based · blind</small></p></div>
+      <div class="check-row"><h3>CSRF &amp; cookies</h3><p>Checks forms for anti-forgery tokens and cookies for safe flags.<small>tokens · SameSite · Secure</small></p></div>
+    </div>
+  </section>
+
+  <section class="wrap">
+    <div class="center"><p class="eyebrow">Why trust it</p><h2 class="big">Built so you don't have to trust us.</h2></div>
+    <div class="trust">
+      <div><span class="label">Local-first</span><h3>Runs on localhost.</h3><p>No telemetry, no account, works offline.</p></div>
+      <div><span class="label">Open-source</span><h3>Every check is on GitHub.</h3><p>Read it, run it, audit it.</p></div>
+      <div><span class="label">Self-tested</span><h3>We scan WebScanX with WebScanX.</h3><p>Every release is scanned before we publish it.</p></div>
+      <div><span class="label">Authorization-gated</span><h3>It won't start until you confirm.</h3><p>You tick "I am authorized" before any scan can start.</p></div>
+    </div>
+  </section>
+
+  <section id="download" class="wrap">
+    <div class="center"><p class="eyebrow">Download</p><h2 class="big">Download WebScanX v1.0</h2></div>
+    <div class="platforms">
+      <div class="platform"><h3>Windows</h3><div class="meta">.exe · 24 MB · Windows 10/11</div><button class="btn btn-primary" data-dl="Windows">Download .exe</button>
+        <div class="sha"><span>SHA-256 8f4b2a67…e109</span><button class="copy" data-copy="8f4b2a67c1d9e3f05a7b6c2d8e1f4a3b9c0d5e7f6a2b1c3d4e5f60718293e109" aria-label="Copy checksum" title="Copy">⧉</button></div></div>
+      <div class="platform"><h3>macOS</h3><div class="meta">.dmg · 28 MB · Apple Silicon + Intel</div><button class="btn btn-primary" data-dl="macOS">Download .dmg</button>
+        <div class="sha"><span>SHA-256 3c7a188f…fa82</span><button class="copy" data-copy="3c7a188f2e4d6b8a0c1e3f5a7b9d2c4e6f8a0b1c3d5e7f9a2b4c6d8e0f1afa82" aria-label="Copy checksum" title="Copy">⧉</button></div></div>
+      <div class="platform"><h3>Linux</h3><div class="meta">.AppImage · 22 MB · x86_64</div><button class="btn btn-primary" data-dl="Linux">Download .AppImage</button>
+        <div class="sha"><span>SHA-256 d5a26ba6…77b1</span><button class="copy" data-copy="d5a26ba64f8e2c0a6b4d8f1e3c5a7b9d0e2f4a6c8b1d3e5f7a9c0b2d4e6f77b1" aria-label="Copy checksum" title="Copy">⧉</button></div></div>
+    </div>
+    <div class="center"><div class="pip">pip install webscanx<button class="copy" data-copy="pip install webscanx" aria-label="Copy command" title="Copy">⧉</button></div>
+      <div class="smalllinks"><a href="#" data-soon>Release notes</a><a href="#" data-soon>Verify signature</a><a href="#" data-soon>System requirements</a></div></div>
+  </section>
+
+  <section class="wrap" style="padding-top:0">
+    <h2 class="big">Questions</h2>
+    <div class="faq">
+      <details><summary>Does anything get uploaded?</summary><p>No. WebScanX runs on your machine and talks only to the target you give it. There's no account, no telemetry, and reports are saved locally.</p></details>
+      <details><summary>Is it legal to scan a website?</summary><p>Only if you own it or have written permission to test it. WebScanX asks you to confirm this before every scan. Scanning other people's systems may be illegal.</p></details>
+      <details open><summary>Does it fix vulnerabilities?</summary><p>No. v1 finds and explains each issue and shows you how to fix it yourself. It never changes your site.</p></details>
+      <details><summary>What does it need to run?</summary><p>Windows 10/11, macOS 12+, or a 64-bit Linux. Or Python 3.10+ with pip. It uses about 150 MB of memory while scanning.</p></details>
+      <details><summary>Is it free?</summary><p>Yes. WebScanX is open-source and free to use.</p></details>
+    </div>
+  </section>
+</main>
+
+<footer><div class="wrap">
+  <div class="fgrid">
+    <div><a class="logo" href="#top">WebScanX</a><p class="text2" style="font-size:14px;margin-top:10px">Local web vulnerability scanner.</p></div>
+    <div><h4>Product</h4><ul><li><a href="#download">Download</a></li><li><a href="#" data-soon>Docs</a></li><li><a href="#sample">Sample report</a></li><li><a href="app.html">Dashboard demo</a></li></ul></div>
+    <div><h4>Project</h4><ul><li><a href="#" data-soon>GitHub</a></li><li><a href="#" data-soon>Security policy</a></li><li><a href="#" data-soon>License</a></li></ul></div>
+    <div><h4>Legal</h4><ul><li><a href="#" data-soon>Responsible use</a></li><li><a href="#" data-soon>Privacy</a></li></ul></div>
+  </div>
+  <div class="fbottom">© 2026 WebScanX · Runs locally.</div>
+  <div class="wordmark" aria-hidden="true">WEBSCANX</div>
+</div></footer>
+
+<script src="report.js"></script>
+<script>
+  const meta = { target: TARGET, date: "14 Sep 2026, 14:02", duration: "3m 42s" };
+  const clone = () => FINDINGS.map(f => ({ ...f }));
+  renderReport(document.getElementById("heroReport"), { findings: clone(), meta, static: true });
+  renderReport(document.getElementById("sampleReport"), { findings: clone(), meta, static: true });
+
+  const words = ["SECURITY HEADERS", "TLS", "XSS", "SQL INJECTION", "CSRF", "COOKIES", "CORS", "CSP", "OPEN REDIRECTS"];
+  document.querySelector(".marquee div").innerHTML = [...words, ...words].map(w => `<span>${w}</span>`).join("");
+
+  // Match the hero button to the visitor's OS.
+  const os = /Mac/i.test(navigator.platform) ? "macOS" : /Linux/i.test(navigator.platform) ? "Linux" : "Windows";
+  document.querySelector("[data-platform-btn]").textContent = `Download for ${os}`;
+
+  document.addEventListener("click", e => {
+    const soon = e.target.closest("[data-soon]");
+    if (soon) { e.preventDefault(); toast("Coming with the v1.0 release"); }
+    const dl = e.target.closest("[data-dl]");
+    if (dl) toast(`${dl.dataset.dl} build isn't published yet — try the dashboard demo`);
+    const s = e.target.closest("[data-sample]");
+    if (s) {
+      e.preventDefault();
+      const json = s.dataset.sample === "json";
+      const body = json ? JSON.stringify({ tool: "WebScanX 1.0", ...meta, findings: FINDINGS.map(({ id, hl, ...f }) => f) }, null, 2)
+        : [`# WebScanX sample report`, `Target: ${meta.target}`, ``, ...FINDINGS.flatMap(f => [`## [${f.sev.toUpperCase()}] ${f.title}`, `Location: ${f.loc}`, ``, f.what, ``, "Fix:", ...f.fix.map(x => `- ${x}`), ``])].join("\n");
+      const a = Object.assign(document.createElement("a"), { href: URL.createObjectURL(new Blob([body], { type: json ? "application/json" : "text/markdown" })), download: `webscanx-sample.${json ? "json" : "md"}` });
+      a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000);
+    }
+  });
+</script>
+</body>
+</html>

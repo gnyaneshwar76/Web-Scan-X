@@ -1,0 +1,377 @@
+<!doctype html><html lang="en"><head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>WebScanX report — http://127.0.0.1:63725/</title>
+<style>
+/* dark-first; light applied by system preference OR the toggle (data-theme) */
+:root{color-scheme:dark light;
+  --bg:#0b0b0d;--card:#161618;--card2:#1f1f22;--raised:#26262a;--rule:#2c2c30;
+  --ink:#f5f5f7;--mut:#a1a1a6;--faint:#6e6e73;--accent:#0a84ff;
+  --shadow:0 1px 2px rgba(0,0,0,.5);
+  --sf:-apple-system,BlinkMacSystemFont,"SF Pro Display","SF Pro Text","Segoe UI",Roboto,system-ui,sans-serif;
+  --mono:ui-monospace,"SF Mono","JetBrains Mono",Menlo,Consolas,monospace}
+:root[data-theme=light]{--bg:#f5f5f7;--card:#fff;--card2:#fff;--raised:#eff0f2;
+  --rule:#e3e3e6;--ink:#1d1d1f;--mut:#6e6e73;--faint:#86868b;--accent:#0071e3;
+  --shadow:0 2px 14px rgba(0,0,0,.07)}
+@media(prefers-color-scheme:light){:root:not([data-theme=dark]){--bg:#f5f5f7;--card:#fff;
+  --card2:#fff;--raised:#eff0f2;--rule:#e3e3e6;--ink:#1d1d1f;--mut:#6e6e73;--faint:#86868b;
+  --accent:#0071e3;--shadow:0 2px 14px rgba(0,0,0,.07)}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);
+  font:16px/1.55 var(--sf);-webkit-font-smoothing:antialiased;
+  transition:background .25s ease,color .25s ease}
+.wrap{max-width:960px;margin:0 auto;padding:26px 22px 80px}
+a{color:var(--accent);text-decoration:none}
+/* top bar */
+.top{display:flex;align-items:center;justify-content:space-between;margin-bottom:28px}
+.brand{font-weight:700;font-size:20px;letter-spacing:-.02em}
+.topr{display:flex;align-items:center;gap:10px}
+.theme{width:38px;height:38px;display:grid;place-items:center;font-size:15px;cursor:pointer;
+  background:var(--card);border:1px solid var(--rule);border-radius:999px;color:var(--ink);
+  box-shadow:var(--shadow)}
+.top .tag{display:inline-flex;align-items:center;gap:7px;font-size:12px;color:var(--mut);
+  background:var(--card);border:1px solid var(--rule);padding:9px 14px;border-radius:999px;
+  box-shadow:var(--shadow)}
+.top .tag::before{content:"";width:7px;height:7px;border-radius:50%;background:#30d158;
+  box-shadow:0 0 8px #30d158}
+/* hero */
+.hero{display:grid;grid-template-columns:auto 1fr;gap:30px;align-items:center;
+  background:var(--card);border:1px solid var(--rule);border-radius:22px;
+  padding:30px 34px;margin:0 0 14px;box-shadow:var(--shadow)}
+.gaugewrap{display:flex;flex-direction:column;align-items:center;gap:14px}
+.gauge{width:150px;height:150px}
+.gtrack{fill:none;stroke:var(--raised);stroke-width:9}
+.gval{fill:none;stroke-width:9;stroke-linecap:round}
+.gnum{font:700 36px/1 var(--sf);text-anchor:middle;fill:var(--ink)}
+.glab{font:600 8.5px/1 var(--sf);letter-spacing:.18em;fill:var(--faint);text-anchor:middle}
+.gband{font-size:13px;font-weight:600;color:var(--c);
+  background:color-mix(in srgb,var(--c) 14%,transparent);border-radius:999px;padding:8px 15px}
+.heromain{min-width:0}
+.eyebrow{font-size:13px;font-weight:600;color:var(--accent);letter-spacing:-.01em;margin:0 0 8px}
+.target{font:700 clamp(24px,3.6vw,36px)/1.1 var(--sf);color:var(--ink);
+  margin:0 0 12px;word-break:break-word;letter-spacing:-.03em}
+.lede{color:var(--mut);font-size:17px;margin:0}
+.lede b{color:var(--ink);font-weight:600}
+/* severity tiles */
+.tiles{display:grid;grid-template-columns:repeat(5,1fr);gap:12px;margin:14px 0 0}
+.tile{background:var(--card);border:1px solid var(--rule);border-radius:18px;
+  padding:18px 12px;text-align:center;box-shadow:var(--shadow)}
+.tile b{display:block;font:700 30px/1 var(--sf);color:var(--c);margin-bottom:5px;letter-spacing:-.02em}
+.tile span{font-size:12px;font-weight:500;color:var(--mut)}
+.tile.dim{box-shadow:none;background:transparent;border-style:dashed;opacity:.6}
+.tile.dim b{color:var(--faint)}
+@media(max-width:720px){.hero{grid-template-columns:1fr;text-align:center}
+  .tiles{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.tiles{grid-template-columns:repeat(2,1fr)}}
+/* meta */
+.meta{display:grid;grid-template-columns:repeat(5,1fr);background:var(--card);
+  border:1px solid var(--rule);border-radius:18px;padding:6px;margin:14px 0 34px;
+  box-shadow:var(--shadow)}
+@media(max-width:720px){.meta{grid-template-columns:repeat(3,1fr)}}
+@media(max-width:420px){.meta{grid-template-columns:repeat(2,1fr)}}
+.m{padding:14px 16px}
+.m span{display:block;font-size:11px;color:var(--faint);margin-bottom:4px}
+.m b{font-weight:600;font-size:13px;font-family:var(--mono);word-break:break-word}
+/* toolbar */
+.toolbar{position:sticky;top:0;z-index:10;
+  background:color-mix(in srgb,var(--bg) 82%,transparent);
+  backdrop-filter:blur(20px);-webkit-backdrop-filter:blur(20px);
+  margin:0 0 18px;padding:14px 0;display:flex;flex-wrap:wrap;gap:10px;align-items:center}
+.search{flex:1 1 220px;min-width:150px;font:15px/1 var(--sf);color:var(--ink);
+  background:var(--card);border:1px solid var(--rule);border-radius:12px;
+  padding:12px 15px;outline:none;box-shadow:var(--shadow)}
+.search:focus{border-color:var(--accent)}
+.search::placeholder{color:var(--faint)}
+.filters{display:flex;flex-wrap:wrap;gap:6px}
+.fbtn{font:500 13px/1 var(--sf);color:var(--ink);background:var(--card);
+  border:1px solid var(--rule);border-radius:999px;padding:10px 15px;cursor:pointer;
+  box-shadow:var(--shadow);transition:background .12s,color .12s}
+.fbtn b{color:var(--faint);margin-left:5px;font-weight:600}
+.fbtn.on{background:var(--accent);border-color:transparent;color:#fff}
+.fbtn.on b{color:#fff;opacity:.8}
+.tools{display:flex;align-items:center;gap:6px;margin-left:auto}
+.count{font-size:13px;color:var(--faint);white-space:nowrap;margin-right:4px}
+.tbtn{font:500 13px/1 var(--sf);color:var(--accent);background:none;border:none;
+  cursor:pointer;padding:10px 8px;border-radius:8px}
+.tbtn:hover{background:var(--raised)}
+/* findings */
+.finding{background:var(--card);border:1px solid var(--rule);border-radius:18px;
+  margin:0 0 12px;overflow:hidden;box-shadow:var(--shadow)}
+.finding.hide{display:none}
+.fhead{display:flex;align-items:center;gap:13px;width:100%;text-align:left;
+  background:none;border:0;color:inherit;cursor:pointer;padding:18px 22px;
+  font:inherit;transition:background .12s}
+.fhead:hover{background:var(--raised)}
+.sev{flex:0 0 auto;font:600 12px/1 var(--sf);color:var(--c);
+  background:color-mix(in srgb,var(--c) 15%,transparent);padding:7px 12px;border-radius:999px}
+.ftitle{font-size:18px;font-weight:600;line-height:1.3;letter-spacing:-.01em}
+.ftitle .num{color:var(--faint);font-weight:600}
+.floc{margin-left:auto;font-family:var(--mono);font-size:12.5px;color:var(--faint);
+  white-space:nowrap;overflow:hidden;text-overflow:ellipsis;max-width:32%}
+.chev{flex:0 0 auto;color:var(--faint);transition:transform .2s;font-size:12px}
+.finding.open .chev{transform:rotate(180deg)}
+.fixed{font:600 10px/1 var(--sf);color:#fff;background:#30d158;
+  padding:5px 8px;border-radius:999px;vertical-align:middle;margin-left:6px}
+.fbody{display:none;padding:0 22px 22px;border-top:1px solid var(--rule)}
+.finding.open .fbody{display:block}
+.tags{display:flex;flex-wrap:wrap;gap:8px;margin:18px 0}
+.scanner,.cat{font:500 12px/1 var(--mono);padding:6px 11px;
+  border-radius:999px;background:var(--raised);color:var(--mut)}
+.block{margin:0 0 18px}
+.block:last-child{margin-bottom:0}
+.block h3{font-size:12px;letter-spacing:.03em;text-transform:uppercase;color:var(--faint);
+  margin:0 0 6px;font-weight:600}
+.block p{margin:0;color:var(--ink);opacity:.86;font-size:15.5px}
+.ev{position:relative}
+.ev pre,.block pre{margin:0;font:13px/1.6 var(--mono);
+  background:var(--raised);border-radius:12px;
+  padding:14px 16px;overflow-x:auto;color:#e0709a;white-space:pre-wrap;word-break:break-word}
+.copy{position:absolute;top:9px;right:9px;font:500 12px/1 var(--sf);
+  color:var(--accent);background:var(--card);
+  border:1px solid var(--rule);border-radius:999px;padding:6px 12px;cursor:pointer}
+.copy.done{color:#fff;background:var(--accent);border-color:transparent}
+.block ul{margin:0;padding-left:18px}
+.block li{font:13px/1.7 var(--mono);word-break:break-all;margin:2px 0}
+.noresult{display:none;color:var(--mut);text-align:center;padding:36px;font-size:15px}
+.empty{background:var(--card);border:1px solid var(--rule);border-radius:18px;
+  padding:44px;text-align:center;color:var(--mut);box-shadow:var(--shadow)}
+.empty h2{margin:0 0 6px;color:var(--ink)}
+footer{margin-top:44px;text-align:center;color:var(--faint);font-size:13px}
+@media(max-width:560px){.floc{display:none}.tools{margin-left:0}}
+/* print: force light, expand everything, hide controls */
+@media print{
+  :root{--bg:#fff;--card:#fff;--card2:#fff;--raised:#f4f4f4;--rule:#d5d5d5;
+    --ink:#111;--mut:#444;--faint:#777;--shadow:none}
+  body{background:#fff;color:#111}
+  .toolbar,.theme{display:none}
+  .fbody{display:block!important}.chev{display:none}
+  .finding{break-inside:avoid;page-break-inside:avoid}
+  .ev pre,.block pre{color:#8a2b12}
+  a{color:#06c}
+}
+</style></head><body><div class="wrap">
+<div class="top"><span class="brand">webscanx</span>
+  <div class="topr">
+    <button class="theme" type="button" aria-label="Toggle light or dark">&#9680;</button>
+    <span class="tag">Authorised testing only</span>
+  </div></div>
+<section class="hero">
+  <div class="gaugewrap"><svg class="gauge" viewBox="0 0 130 130" role="img"
+     aria-label="Risk score 93 of 100">
+  <circle class="gtrack" cx="65" cy="65" r="54"/>
+  <circle class="gval" cx="65" cy="65" r="54" transform="rotate(-90 65 65)"
+    style="stroke:#ef4444;stroke-dasharray:315.5 339.3"/>
+  <text class="gnum" x="65" y="63" style="fill:#ef4444">93</text>
+  <text class="glab" x="65" y="84">RISK SCORE</text>
+</svg>
+    <span class="gband" style="--c:#ef4444">High risk</span>
+  </div>
+  <div class="heromain">
+    <p class="eyebrow">Security scan report</p>
+    <h1 class="target">http://127.0.0.1:63725/</h1>
+    <p class="lede"><b>8 findings</b> across 5 modules. Prioritise the high-severity findings first.</p>
+    <div class="tiles"><div class="tile dim" style="--c:#ff3b30;--tint:#ff3b3014;--edge:#ff3b303a"><b>0</b><span>Critical</span></div><div class="tile" style="--c:#ef4444;--tint:#ef444414;--edge:#ef44443a"><b>3</b><span>High</span></div><div class="tile" style="--c:#f97316;--tint:#f9731614;--edge:#f973163a"><b>2</b><span>Medium</span></div><div class="tile" style="--c:#eab308;--tint:#eab30814;--edge:#eab3083a"><b>3</b><span>Low</span></div><div class="tile dim" style="--c:#8a8a8a;--tint:#8a8a8a14;--edge:#8a8a8a3a"><b>0</b><span>Info</span></div></div>
+  </div>
+</section>
+<div class="meta"><div class="m"><span>Target</span><b>http://127.0.0.1:63725/</b></div><div class="m"><span>Type</span><b>web</b></div><div class="m"><span>Scan date</span><b>2026-09-15 10:55 UTC</b></div><div class="m"><span>Duration</span><b>&lt;1s</b></div><div class="m"><span>Modules run</span><b>web.headers, web.tls, web.xss, web.sqli, web.csrf</b></div><div class="m"><span>Tool</span><b>WebScanX 0.1.0.dev0</b></div></div>
+
+<div class="toolbar">
+  <input class="search" type="search" placeholder="Search findings…"
+         aria-label="Search findings">
+  <div class="filters"><button class="fbtn on" data-f="all">All <b>8</b></button><button class="fbtn" data-f="high">High <b>3</b></button><button class="fbtn" data-f="medium">Medium <b>2</b></button><button class="fbtn" data-f="low">Low <b>3</b></button></div>
+  <div class="tools">
+    <span class="count" aria-live="polite">8 shown</span>
+    <button class="tbtn" data-x="expand">Expand all</button>
+    <button class="tbtn" data-x="collapse">Collapse all</button>
+  </div>
+</div>
+
+    <article class="finding open" data-sev="high"
+             data-text="site served over http (no tls) http://127.0.0.1:63725 web.tls a04:2025 cryptographic failures the site is reachable over plain http, so credentials and data travel unencrypted and can be read or altered in transit. open http://127.0.0.1:63725 and confirm the browser shows &#x27;not secure&#x27; with no padlock. serve everything over https and 301-redirect http to https; then add hsts." id="f1" style="--c:#ef4444;--tint:#ef444412">
+      <button class="fhead" type="button" aria-expanded="true">
+        <span class="sev" style="--c:#ef4444">High</span>
+        <span class="ftitle"><span class="num">1.</span> Site served over HTTP (no TLS) </span>
+        <code class="floc">http://127.0.0.1:63725</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.tls</span><span class="cat">A04:2025 Cryptographic Failures</span></div>
+        <div class="block"><h3>What it is</h3><p>The site is reachable over plain HTTP, so credentials and data travel unencrypted and can be read or altered in transit.</p></div><div class="block"><h3>How to check it yourself</h3><p>Open http://127.0.0.1:63725 and confirm the browser shows &#x27;Not secure&#x27; with no padlock.</p></div><div class="block"><h3>Evidence</h3><div class="ev"><pre>No working HTTPS endpoint responded.</pre><button class="copy" type="button" title="Copy">Copy</button></div></div><div class="block"><h3>How to fix</h3><p>Serve everything over HTTPS and 301-redirect HTTP to HTTPS; then add HSTS.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html" rel="noopener noreferrer" target="_blank">https://cheatsheetseries.owasp.org/cheatsheets/Transport_Layer_Security_Cheat_Sheet.html</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding open" data-sev="high"
+             data-text="reflected xss http://127.0.0.1:63725/?q=hello (param: q) web.xss a05:2025 injection / cwe-79 input sent to this page is echoed back into the html without encoding, so an attacker can craft a link that runs javascript in a victim&#x27;s browser (session theft, actions as the user). request the url with a test value like &quot;&gt;&lt;wsxtest&gt; in the parameter and view source — if it appears unescaped, it&#x27;s reflected. context-encode all output (html-encode &lt; &gt; &quot; &#x27; &amp;), prefer a framework&#x27;s auto-escaping template, and add a content-security-policy." id="f2" style="--c:#ef4444;--tint:#ef444412">
+      <button class="fhead" type="button" aria-expanded="true">
+        <span class="sev" style="--c:#ef4444">High</span>
+        <span class="ftitle"><span class="num">2.</span> Reflected XSS </span>
+        <code class="floc">http://127.0.0.1:63725/?q=hello (param: q)</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.xss</span><span class="cat">A05:2025 Injection / CWE-79</span></div>
+        <div class="block"><h3>What it is</h3><p>Input sent to this page is echoed back into the HTML without encoding, so an attacker can craft a link that runs JavaScript in a victim&#x27;s browser (session theft, actions as the user).</p></div><div class="block"><h3>How to check it yourself</h3><p>Request the URL with a test value like &quot;&gt;&lt;wsxTEST&gt; in the parameter and view source — if it appears unescaped, it&#x27;s reflected.</p></div><div class="block"><h3>Evidence</h3><div class="ev"><pre>Marker reflected unescaped: ...&lt;p&gt;results for &quot;&gt;&lt;wsxbab08d764a&gt;&lt;/p&gt;...</pre><button class="copy" type="button" title="Copy">Copy</button></div></div><div class="block"><h3>How to fix</h3><p>Context-encode all output (HTML-encode &lt; &gt; &quot; &#x27; &amp;), prefer a framework&#x27;s auto-escaping template, and add a Content-Security-Policy.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-community/attacks/xss/" rel="noopener noreferrer" target="_blank">https://owasp.org/www-community/attacks/xss/</a></li><li><a href="https://cwe.mitre.org/data/definitions/79.html" rel="noopener noreferrer" target="_blank">https://cwe.mitre.org/data/definitions/79.html</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding open" data-sev="high"
+             data-text="sql injection (error-based) http://127.0.0.1:63725/?q=hello (param: q) web.sqli a05:2025 injection / cwe-89 input here reaches a database query unsanitised: a single quote produced a database error, meaning an attacker could read or alter the database, bypass logins, or exfiltrate data. append a single quote (&#x27;) to the value and resend. a raw sql error in the response confirms it. use parameterised queries / prepared statements (never string concatenation), validate input, and hide raw db errors from users." id="f3" style="--c:#ef4444;--tint:#ef444412">
+      <button class="fhead" type="button" aria-expanded="true">
+        <span class="sev" style="--c:#ef4444">High</span>
+        <span class="ftitle"><span class="num">3.</span> SQL injection (error-based) </span>
+        <code class="floc">http://127.0.0.1:63725/?q=hello (param: q)</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.sqli</span><span class="cat">A05:2025 Injection / CWE-89</span></div>
+        <div class="block"><h3>What it is</h3><p>Input here reaches a database query unsanitised: a single quote produced a database error, meaning an attacker could read or alter the database, bypass logins, or exfiltrate data.</p></div><div class="block"><h3>How to check it yourself</h3><p>Append a single quote (&#x27;) to the value and resend. A raw SQL error in the response confirms it.</p></div><div class="block"><h3>Evidence</h3><div class="ev"><pre>Probe &#x27; triggered a DB error: SQL syntax; check the MySQL</pre><button class="copy" type="button" title="Copy">Copy</button></div></div><div class="block"><h3>How to fix</h3><p>Use parameterised queries / prepared statements (never string concatenation), validate input, and hide raw DB errors from users.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-community/attacks/SQL_Injection" rel="noopener noreferrer" target="_blank">https://owasp.org/www-community/attacks/SQL_Injection</a></li><li><a href="https://cwe.mitre.org/data/definitions/89.html" rel="noopener noreferrer" target="_blank">https://cwe.mitre.org/data/definitions/89.html</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding" data-sev="medium"
+             data-text="missing content-security-policy header http://127.0.0.1:63725/ web.headers a02:2025 security misconfiguration no content-security-policy header. csp is the browser&#x27;s main defence against cross-site scripting and data injection. open the site in a browser, check the network tab response headers for &#x27;content-security-policy&#x27;. absent = flagged. add a content-security-policy header. start strict, e.g. default-src &#x27;self&#x27;; object-src &#x27;none&#x27;; frame-ancestors &#x27;none&#x27;." id="f4" style="--c:#f97316;--tint:#f9731612">
+      <button class="fhead" type="button" aria-expanded="false">
+        <span class="sev" style="--c:#f97316">Medium</span>
+        <span class="ftitle"><span class="num">4.</span> Missing content-security-policy header </span>
+        <code class="floc">http://127.0.0.1:63725/</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.headers</span><span class="cat">A02:2025 Security Misconfiguration</span></div>
+        <div class="block"><h3>What it is</h3><p>No Content-Security-Policy header. CSP is the browser&#x27;s main defence against cross-site scripting and data injection.</p></div><div class="block"><h3>How to check it yourself</h3><p>Open the site in a browser, check the Network tab response headers for &#x27;Content-Security-Policy&#x27;. Absent = flagged.</p></div><div class="block"><h3>How to fix</h3><p>Add a Content-Security-Policy header. Start strict, e.g. default-src &#x27;self&#x27;; object-src &#x27;none&#x27;; frame-ancestors &#x27;none&#x27;.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-project-secure-headers/" rel="noopener noreferrer" target="_blank">https://owasp.org/www-project-secure-headers/</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding" data-sev="medium"
+             data-text="form without anti-csrf token http://127.0.0.1:63725/login (on http://127.0.0.1:63725/) web.csrf cwe-352 (cross-site request forgery) this form changes state (post) but carries no anti-csrf token, so another site can force a logged-in user&#x27;s browser to submit it without their intent. inspect the form&#x27;s fields: no hidden token (csrf/xsrf/authenticity) means the request can be forged from off-site. add a per-session/per-request anti-csrf token and verify it server-side; set samesite=lax or strict on session cookies. most frameworks provide this — enable it." id="f5" style="--c:#f97316;--tint:#f9731612">
+      <button class="fhead" type="button" aria-expanded="false">
+        <span class="sev" style="--c:#f97316">Medium</span>
+        <span class="ftitle"><span class="num">5.</span> Form without anti-CSRF token </span>
+        <code class="floc">http://127.0.0.1:63725/login (on http://127.0.0.1:63725/)</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.csrf</span><span class="cat">CWE-352 (Cross-Site Request Forgery)</span></div>
+        <div class="block"><h3>What it is</h3><p>This form changes state (POST) but carries no anti-CSRF token, so another site can force a logged-in user&#x27;s browser to submit it without their intent.</p></div><div class="block"><h3>How to check it yourself</h3><p>Inspect the form&#x27;s fields: no hidden token (csrf/xsrf/authenticity) means the request can be forged from off-site.</p></div><div class="block"><h3>Evidence</h3><div class="ev"><pre>POST form to http://127.0.0.1:63725/login; fields: user, pass</pre><button class="copy" type="button" title="Copy">Copy</button></div></div><div class="block"><h3>How to fix</h3><p>Add a per-session/per-request anti-CSRF token and verify it server-side; set SameSite=Lax or Strict on session cookies. Most frameworks provide this — enable it.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-community/attacks/csrf" rel="noopener noreferrer" target="_blank">https://owasp.org/www-community/attacks/csrf</a></li><li><a href="https://cwe.mitre.org/data/definitions/352.html" rel="noopener noreferrer" target="_blank">https://cwe.mitre.org/data/definitions/352.html</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding" data-sev="low"
+             data-text="missing x-content-type-options header http://127.0.0.1:63725/ web.headers a02:2025 security misconfiguration no x-content-type-options header. the browser may mime-sniff responses and run a file as a different, dangerous type. check the response headers for &#x27;x-content-type-options: nosniff&#x27;. add &#x27;x-content-type-options: nosniff&#x27; to every response." id="f6" style="--c:#eab308;--tint:#eab30812">
+      <button class="fhead" type="button" aria-expanded="false">
+        <span class="sev" style="--c:#eab308">Low</span>
+        <span class="ftitle"><span class="num">6.</span> Missing x-content-type-options header </span>
+        <code class="floc">http://127.0.0.1:63725/</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.headers</span><span class="cat">A02:2025 Security Misconfiguration</span></div>
+        <div class="block"><h3>What it is</h3><p>No X-Content-Type-Options header. The browser may MIME-sniff responses and run a file as a different, dangerous type.</p></div><div class="block"><h3>How to check it yourself</h3><p>Check the response headers for &#x27;X-Content-Type-Options: nosniff&#x27;.</p></div><div class="block"><h3>How to fix</h3><p>Add &#x27;X-Content-Type-Options: nosniff&#x27; to every response.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-project-secure-headers/" rel="noopener noreferrer" target="_blank">https://owasp.org/www-project-secure-headers/</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding" data-sev="low"
+             data-text="missing x-frame-options header http://127.0.0.1:63725/ web.headers a02:2025 security misconfiguration no x-frame-options / csp frame-ancestors. the page can be framed by another site for clickjacking. check for &#x27;x-frame-options&#x27; or a csp &#x27;frame-ancestors&#x27; directive. add &#x27;x-frame-options: deny&#x27; or csp &#x27;frame-ancestors none&#x27;." id="f7" style="--c:#eab308;--tint:#eab30812">
+      <button class="fhead" type="button" aria-expanded="false">
+        <span class="sev" style="--c:#eab308">Low</span>
+        <span class="ftitle"><span class="num">7.</span> Missing x-frame-options header </span>
+        <code class="floc">http://127.0.0.1:63725/</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.headers</span><span class="cat">A02:2025 Security Misconfiguration</span></div>
+        <div class="block"><h3>What it is</h3><p>No X-Frame-Options / CSP frame-ancestors. The page can be framed by another site for clickjacking.</p></div><div class="block"><h3>How to check it yourself</h3><p>Check for &#x27;X-Frame-Options&#x27; or a CSP &#x27;frame-ancestors&#x27; directive.</p></div><div class="block"><h3>How to fix</h3><p>Add &#x27;X-Frame-Options: DENY&#x27; or CSP &#x27;frame-ancestors none&#x27;.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-project-secure-headers/" rel="noopener noreferrer" target="_blank">https://owasp.org/www-project-secure-headers/</a></li></ul></div>
+      </div>
+    </article>
+    <article class="finding" data-sev="low"
+             data-text="missing referrer-policy header http://127.0.0.1:63725/ web.headers a02:2025 security misconfiguration no referrer-policy header. full urls (which may contain sensitive data) can leak to other sites via the referer header. check the response headers for &#x27;referrer-policy&#x27;. add &#x27;referrer-policy: strict-origin-when-cross-origin&#x27; or stricter." id="f8" style="--c:#eab308;--tint:#eab30812">
+      <button class="fhead" type="button" aria-expanded="false">
+        <span class="sev" style="--c:#eab308">Low</span>
+        <span class="ftitle"><span class="num">8.</span> Missing referrer-policy header </span>
+        <code class="floc">http://127.0.0.1:63725/</code>
+        <span class="chev" aria-hidden="true">&#9662;</span>
+      </button>
+      <div class="fbody">
+        <div class="tags"><span class="scanner">web.headers</span><span class="cat">A02:2025 Security Misconfiguration</span></div>
+        <div class="block"><h3>What it is</h3><p>No Referrer-Policy header. Full URLs (which may contain sensitive data) can leak to other sites via the Referer header.</p></div><div class="block"><h3>How to check it yourself</h3><p>Check the response headers for &#x27;Referrer-Policy&#x27;.</p></div><div class="block"><h3>How to fix</h3><p>Add &#x27;Referrer-Policy: strict-origin-when-cross-origin&#x27; or stricter.</p></div><div class="block"><h3>References</h3><ul><li><a href="https://owasp.org/www-project-secure-headers/" rel="noopener noreferrer" target="_blank">https://owasp.org/www-project-secure-headers/</a></li></ul></div>
+      </div>
+    </article>
+<p class="noresult">No findings match your search.</p>
+<footer>Generated by WebScanX 0.1.0.dev0 — a local security scanner.<br>
+Nothing in this report left your device. Scan only systems you are authorised to test.</footer>
+</div>
+<script>
+(function(){
+  // theme toggle: dark-first, honours system, remembers the viewer's choice
+  var root=document.documentElement, tbtn=document.querySelector('.theme');
+  function eff(){var t=root.getAttribute('data-theme');
+    return t||(matchMedia('(prefers-color-scheme:light)').matches?'light':'dark');}
+  function icon(){if(tbtn) tbtn.textContent=eff()==='dark'?'☀':'☾';}
+  try{var saved=localStorage.getItem('wsx-theme');if(saved)root.setAttribute('data-theme',saved);}catch(e){}
+  icon();
+  if(tbtn) tbtn.addEventListener('click',function(){
+    var n=eff()==='dark'?'light':'dark';root.setAttribute('data-theme',n);
+    try{localStorage.setItem('wsx-theme',n);}catch(e){}
+    icon();
+  });
+
+  var cards=[].slice.call(document.querySelectorAll('.finding'));
+  var fbtns=[].slice.call(document.querySelectorAll('.fbtn'));
+  var search=document.querySelector('.search');
+  var count=document.querySelector('.count');
+  var none=document.querySelector('.noresult');
+  var sev='all', q='';
+
+  function apply(){
+    var shown=0;
+    cards.forEach(function(c){
+      var ok=(sev==='all'||c.dataset.sev===sev)&&
+             (!q||c.dataset.text.indexOf(q)>-1);
+      c.classList.toggle('hide',!ok);
+      if(ok) shown++;
+    });
+    if(count) count.textContent=shown+' shown';
+    if(none) none.style.display=shown?'none':'block';
+  }
+
+  fbtns.forEach(function(b){b.addEventListener('click',function(){
+    fbtns.forEach(function(x){x.classList.remove('on')});
+    b.classList.add('on'); sev=b.dataset.f; apply();
+  })});
+
+  if(search) search.addEventListener('input',function(){
+    q=search.value.trim().toLowerCase(); apply();
+  });
+
+  // expand/collapse a single finding
+  cards.forEach(function(c){
+    var head=c.querySelector('.fhead');
+    head.addEventListener('click',function(){
+      var open=c.classList.toggle('open');
+      head.setAttribute('aria-expanded',open?'true':'false');
+    });
+  });
+
+  // expand-all / collapse-all act on currently visible findings
+  [].forEach.call(document.querySelectorAll('.tbtn'),function(b){
+    b.addEventListener('click',function(){
+      var open=b.dataset.x==='expand';
+      cards.forEach(function(c){
+        if(c.classList.contains('hide')) return;
+        c.classList.toggle('open',open);
+        c.querySelector('.fhead').setAttribute('aria-expanded',open?'true':'false');
+      });
+    });
+  });
+
+  // copy evidence blocks
+  [].forEach.call(document.querySelectorAll('.copy'),function(b){
+    b.addEventListener('click',function(e){
+      e.stopPropagation();
+      var txt=b.previousElementSibling.textContent;
+      var done=function(){b.textContent='Copied';b.classList.add('done');
+        setTimeout(function(){b.textContent='Copy';b.classList.remove('done')},1400);};
+      if(navigator.clipboard&&navigator.clipboard.writeText){
+        navigator.clipboard.writeText(txt).then(done,done);
+      } else {
+        var t=document.createElement('textarea');t.value=txt;document.body.appendChild(t);
+        t.select();try{document.execCommand('copy')}catch(_){};document.body.removeChild(t);done();
+      }
+    });
+  });
+})();
+</script>
+</body></html>

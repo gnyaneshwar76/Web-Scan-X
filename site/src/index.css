@@ -1,0 +1,143 @@
+/* Google Fonts — must be first */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:ital,wght@0,400;0,500;0,600;1,400&display=swap');
+
+@import 'tailwindcss';
+
+@font-face {
+  font-family: "JetBrains Mono";
+  font-style: normal;
+  font-weight: 400 600;
+  src: url("https://static.figma.com/font/JetBrainsMono_wght__1") format("woff2");
+}
+
+@theme {
+  --color-bg: #0b0a0a;
+  --color-surface: #111010;
+  --color-surface-raised: #181717;
+  --color-rule: #1e1c1c;
+  --color-rule-strong: #2a2828;
+  --color-primary-text: #f0eeed;
+  --color-secondary-text: #8a8785;
+  --color-muted-text: #535050;
+  --color-accent: #22d3a6;
+  --color-sev-critical: #ff3b30;
+  --color-sev-high: #e84040;
+  --color-sev-medium: #f59e0b;
+  --color-sev-low: #c9a80c;
+  --color-sev-info: #525050;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  background-color: #0b0a0a;
+  color: #f0eeed;
+  font-family: 'Inter', system-ui, -apple-system, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+  font-feature-settings: "cv02", "cv03", "cv04", "cv11";
+}
+
+.mono {
+  font-family: 'JetBrains Mono', 'Menlo', monospace;
+  font-feature-settings: "calt" 0;
+}
+
+/* Precision scrollbars */
+::-webkit-scrollbar { width: 4px; height: 4px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: #1e1c1c; }
+::-webkit-scrollbar-thumb:hover { background: #2a2828; }
+* { scrollbar-width: thin; scrollbar-color: #1e1c1c transparent; }
+
+/* Dashboard panels: hide scrollbar until needed */
+.scroll-hidden {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.scroll-hidden::-webkit-scrollbar { display: none; }
+
+/* ── Shop-specific ─────────────────────────────── */
+
+.hero-haze {
+  background: radial-gradient(circle 800px at 50% 35%, rgba(34,211,166,0.04) 0%, rgba(138,150,163,0.025) 45%, transparent 75%);
+}
+
+.film-grain {
+  background-image: radial-gradient(rgba(240,238,237,0.07) 1px, transparent 0);
+  background-size: 24px 24px;
+  mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 10%, transparent 85%);
+  -webkit-mask-image: radial-gradient(ellipse 60% 50% at 50% 40%, black 10%, transparent 85%);
+}
+
+.perspective-stage { perspective: 1600px; }
+
+.product-tilt {
+  transform: rotateX(12deg) translateY(20px);
+  transform-origin: center top;
+  transition: transform 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+  box-shadow: 0 40px 100px -20px rgba(0,0,0,0.9);
+}
+.product-tilt:hover { transform: rotateX(4deg) translateY(0px); }
+
+@keyframes marquee {
+  0% { transform: translateX(0%); }
+  100% { transform: translateX(-50%); }
+}
+.animate-marquee {
+  display: flex;
+  width: max-content;
+  animation: marquee 35s linear infinite;
+}
+.animate-marquee:hover { animation-play-state: paused; }
+
+details > summary { list-style: none; }
+details > summary::-webkit-details-marker { display: none; }
+
+@keyframes ping {
+  75%, 100% { transform: scale(2); opacity: 0; }
+}
+.animate-ping {
+  animation: ping 1s cubic-bezier(0,0,0.2,1) infinite;
+}
+
+/* ── Dashboard precision utilities ─────────────── */
+
+/* Label caps */
+.label-caps {
+  font-family: 'JetBrains Mono', monospace;
+  font-size: 10px;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  font-weight: 500;
+}
+
+/* Focus ring */
+.focus-ring:focus {
+  outline: none;
+  box-shadow: 0 0 0 1px #22d3a6;
+}
+
+/* Severity border utilities — used via inline style */
+.sev-border-high   { border-left-color: #e84040; }
+.sev-border-medium { border-left-color: #f59e0b; }
+.sev-border-low    { border-left-color: #c9a80c; }
+.sev-border-info   { border-left-color: #525050; }
+.sev-border-critical { border-left-color: #ff3b30; }
+
+/* Fade-in for tab content */
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to   { opacity: 1; transform: translateY(0); }
+}
+.fade-in { animation: fadeIn 0.15s ease forwards; }
+
+/* Subtle pulse for live indicator */
+@keyframes livePulse {
+  0%, 100% { opacity: 1; }
+  50% { opacity: 0.4; }
+}
+.live-pulse { animation: livePulse 2s ease-in-out infinite; }

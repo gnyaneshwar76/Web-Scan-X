@@ -1,3 +1,6 @@
+> HISTORICAL — superseded by the Figma Make design in `site/`. Kept for reference only.
+> Current design handoff: DESIGN-BRIEF.md
+
 # WebScanX — Landing Page Documentation
 
 Complete record of the design: what the page contains, how it is built, the decisions

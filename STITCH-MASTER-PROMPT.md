@@ -1,3 +1,6 @@
+> HISTORICAL — superseded by the Figma Make design in `site/`. Kept for reference only.
+> Current design handoff: DESIGN-BRIEF.md
+
 # WebScanX — Stitch Master Prompt (one go)
 
 Open a NEW Stitch project (Web / desktop). Paste the whole block below as the first

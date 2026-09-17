@@ -1,3 +1,6 @@
+> HISTORICAL — superseded by the Figma Make design in `site/`. Kept for reference only.
+> Current design handoff: DESIGN-BRIEF.md
+
 # WebScanX — Stitch Prompts
 
 Paste these into Stitch (stitch.withgoogle.com) in order. Paste **one prompt per screen**,

@@ -21,10 +21,10 @@
   --color-muted-text: #535050;
   --color-accent: #22d3a6;
   --color-sev-critical: #ff3b30;
-  --color-sev-high: #e84040;
-  --color-sev-medium: #f59e0b;
-  --color-sev-low: #c9a80c;
-  --color-sev-info: #525050;
+  --color-sev-high: #ef4444;
+  --color-sev-medium: #f97316;
+  --color-sev-low: #eab308;
+  --color-sev-info: #8a8a8a;
 }
 
 html {
@@ -122,10 +122,10 @@ details > summary::-webkit-details-marker { display: none; }
 }
 
 /* Severity border utilities — used via inline style */
-.sev-border-high   { border-left-color: #e84040; }
-.sev-border-medium { border-left-color: #f59e0b; }
-.sev-border-low    { border-left-color: #c9a80c; }
-.sev-border-info   { border-left-color: #525050; }
+.sev-border-high   { border-left-color: #ef4444; }
+.sev-border-medium { border-left-color: #f97316; }
+.sev-border-low    { border-left-color: #eab308; }
+.sev-border-info   { border-left-color: #8a8a8a; }
 .sev-border-critical { border-left-color: #ff3b30; }
 
 /* Fade-in for tab content */

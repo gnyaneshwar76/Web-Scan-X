@@ -123,7 +123,7 @@ export default function History() {
                 >
                   Export
                 </button>
-                <button className="text-[#2a2828] hover:text-[#e84040] transition-colors duration-150">
+                <button className="text-[#2a2828] hover:text-[#ef4444] transition-colors duration-150">
                   ✕
                 </button>
               </div>

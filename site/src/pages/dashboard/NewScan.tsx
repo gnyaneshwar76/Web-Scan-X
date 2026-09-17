@@ -70,11 +70,11 @@ export default function NewScan() {
                   mono text-[13px] placeholder-[#353332] outline-none
                   transition-colors duration-150
                   focus:border-[#22d3a6]
-                  ${error ? "border-[#e84040]" : "border-[#1e1c1c]"}
+                  ${error ? "border-[#ef4444]" : "border-[#1e1c1c]"}
                 `}
               />
               {error && (
-                <p className="mono text-[11px] text-[#e84040] mt-1.5">{error}</p>
+                <p className="mono text-[11px] text-[#ef4444] mt-1.5">{error}</p>
               )}
             </div>
 

@@ -46,15 +46,26 @@ class ScanContext:
     max_depth: int | None = None  # crawl depth cap override (None = scanner default)
 
 
-def run(target: Target, ctx: ScanContext | None = None) -> list[Finding]:
-    """Run every applicable scanner and return deduped, worst-first findings."""
+def run(target: Target, ctx: ScanContext | None = None,
+        on_progress: Callable[[str, list[Finding]], None] | None = None,
+        ) -> list[Finding]:
+    """Run every applicable scanner and return deduped, worst-first findings.
+
+    ``on_progress(scanner_name, new_findings)`` is called after each scanner
+    finishes, so a live UI can show the run as it happens.
+    """
     ctx = ctx or ScanContext()
     seen: dict[str, Finding] = {}
     for name, scanner in scanners_for(target.kind):
         if ctx.only and name not in ctx.only:
             continue
+        fresh: list[Finding] = []
         for finding in scanner(target, ctx):
-            seen.setdefault(finding.fingerprint, finding)  # first wins on dupes
+            if finding.fingerprint not in seen:
+                seen[finding.fingerprint] = finding  # first wins on dupes
+                fresh.append(finding)
+        if on_progress is not None:
+            on_progress(name, fresh)
     return sorted(seen.values(), key=lambda f: f.severity, reverse=True)
 
 
@@ -68,8 +79,11 @@ def demo() -> None:
         yield Finding("Example", "low", target.location, "demo.dummy")
         yield Finding("Example", "low", target.location, "demo.dummy")  # dupe
 
-    findings = run(Target(dummy_kind, "app.apk", "app.apk"))
+    seen_progress: list[tuple[str, int]] = []
+    findings = run(Target(dummy_kind, "app.apk", "app.apk"),
+                   on_progress=lambda name, fresh: seen_progress.append((name, len(fresh))))
     assert len(findings) == 1, "duplicates must collapse to one"
+    assert seen_progress == [("demo.dummy", 1)], "progress reports deduped findings"
     assert findings[0].scanner == "demo.dummy"
     # A kind with no registered scanners -> empty, no crash (offline, no network).
     assert run(Target(TargetKind.DESKTOP, "x.exe", "x.exe")) == []

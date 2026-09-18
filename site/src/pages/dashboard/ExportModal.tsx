@@ -1,12 +1,15 @@
 import { useState } from "react";
 
+import { currentScan, reportUrl } from "@/data/api";
+
 type Format = "PDF" | "Markdown" | "HTML" | "JSON";
 
-const FORMATS: { key: Format; desc: string; ext: string }[] = [
-  { key: "PDF",      desc: "Share with a client",     ext: "pdf" },
-  { key: "Markdown", desc: "Paste into a ticket",     ext: "md"  },
-  { key: "HTML",     desc: "Open in any browser",     ext: "html" },
-  { key: "JSON",     desc: "Feed into other tools",   ext: "json" },
+const FORMATS: { key: Format; desc: string; ext: string; fmt: string }[] = [
+  // PDF isn't a renderer yet — the HTML one is styled for browser print-to-PDF.
+  { key: "PDF",      desc: "Print the HTML export",   ext: "pdf",  fmt: "html" },
+  { key: "Markdown", desc: "Paste into a ticket",     ext: "md",   fmt: "md"   },
+  { key: "HTML",     desc: "Open in any browser",     ext: "html", fmt: "html" },
+  { key: "JSON",     desc: "Feed into other tools",   ext: "json", fmt: "json" },
 ];
 
 const TOGGLES = [
@@ -16,14 +19,27 @@ const TOGGLES = [
 ];
 
 export default function ExportModal({ onClose }: { onClose: () => void }) {
-  const [format, setFormat] = useState<Format>("PDF");
+  const [format, setFormat] = useState<Format>("HTML");
   const [opts, setOpts] = useState({ evidence: true, ignored: false, redact: false });
   const [exporting, setExporting] = useState(false);
 
-  const ext = FORMATS.find((f) => f.key === format)?.ext ?? "pdf";
+  const chosen = FORMATS.find((f) => f.key === format);
+  const ext = chosen?.ext ?? "html";
+  const job = currentScan();
+  const href =
+    job && job.state === "done" ? reportUrl(job.id, chosen?.fmt ?? "html") : null;
 
   function handleExport() {
     setExporting(true);
+    if (href) {
+      // The engine sets Content-Disposition, so this saves rather than navigates.
+      const a = document.createElement("a");
+      a.href = href;
+      a.rel = "noopener";
+      document.body.appendChild(a);
+      a.click();
+      a.remove();
+    }
     setTimeout(onClose, 650);
   }
 
@@ -92,12 +108,22 @@ export default function ExportModal({ onClose }: { onClose: () => void }) {
           {/* Output path */}
           <div>
             <div className="flex items-center justify-between mb-2">
-              <p className="label-caps text-[#3a3836]">Output path</p>
-              <button className="mono text-[10px] text-[#2a2828] hover:text-[#535050] transition-colors duration-150">Change</button>
+              <p className="label-caps text-[#3a3836]">Saves to</p>
+              <span className="mono text-[10px] text-[#2a2828]">browser downloads</span>
             </div>
             <div className="bg-[#181717] border border-[#1e1c1c] px-4 py-2.5 mono text-[11px] text-[#535050]">
-              ~/Documents/webscanx-report-2026-09-15.{ext}
+              {job ? `webscanx-${job.id}.${ext}` : `webscanx-report.${ext}`}
             </div>
+            {!href && (
+              <p className="mono text-[10px] text-[#eab308] mt-2 leading-relaxed">
+                No finished scan to export — run a scan first.
+              </p>
+            )}
+            {format === "PDF" && href && (
+              <p className="mono text-[10px] text-[#535050] mt-2 leading-relaxed">
+                Downloads the HTML report — open it and print to PDF.
+              </p>
+            )}
           </div>
         </div>
 

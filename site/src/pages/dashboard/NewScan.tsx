@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { setCurrentScan, startScan } from "@/data/api";
+
 type Depth = "Quick" | "Standard" | "Deep";
 
 const DEPTHS: { key: Depth; time: string; desc: string }[] = [
@@ -8,13 +10,21 @@ const DEPTHS: { key: Depth; time: string; desc: string }[] = [
   { key: "Deep", time: "~45 min", desc: "All modules, full crawl" },
 ];
 
+// Each toggle maps to the engine scanners it switches off when unchecked.
 const MODULES = [
-  { id: "headers", label: "Security headers" },
-  { id: "tls", label: "TLS / certificates" },
-  { id: "xss", label: "XSS" },
-  { id: "sqli", label: "SQL injection" },
-  { id: "csrf", label: "CSRF & cookies" },
+  { id: "headers", label: "Security headers", scanners: ["web.headers", "web.csp"] },
+  { id: "tls", label: "TLS / certificates", scanners: ["web.tls", "web.mixed"] },
+  { id: "xss", label: "XSS", scanners: ["web.xss"] },
+  { id: "sqli", label: "SQL injection", scanners: ["web.sqli"] },
+  { id: "csrf", label: "CSRF & cookies", scanners: ["web.csrf", "web.cookies"] },
 ];
+
+// Scan depth -> how hard the engine works. Quick is the two cheap checks.
+const DEPTH_SETTINGS: Record<Depth, { only?: string[]; maxPages?: number; depth?: number }> = {
+  Quick: { only: ["web.headers", "web.tls", "web.csp"], maxPages: 1, depth: 0 },
+  Standard: {},
+  Deep: { maxPages: 100, depth: 4 },
+};
 
 const RECENT = [
   "https://staging.example.com",
@@ -30,8 +40,10 @@ export default function NewScan() {
   );
   const [authorized, setAuthorized] = useState(false);
   const [error, setError] = useState("");
+  const [starting, setStarting] = useState(false);
 
-  function handleStart() {
+  async function handleStart() {
+    if (starting) return;
     if (!target.trim()) {
       setError("Enter a full URL including https://");
       return;
@@ -39,7 +51,24 @@ export default function NewScan() {
     try { new URL(target.trim()); }
     catch { setError("Enter a valid URL"); return; }
     setError("");
-    window.location.hash = "/dashboard/scanning";
+    setStarting(true);
+
+    const exclude = MODULES.filter((m) => !modules[m.id]).flatMap((m) => m.scanners);
+    try {
+      const job = await startScan({
+        target: target.trim(),
+        kind: "web",
+        authorized,
+        exclude,
+        ...DEPTH_SETTINGS[depth],
+      });
+      setCurrentScan(job);
+      window.location.hash = "/dashboard/scanning";
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setStarting(false);
+    }
   }
 
   return (
@@ -198,16 +227,16 @@ export default function NewScan() {
           {/* Start button */}
           <button
             onClick={handleStart}
-            disabled={!authorized}
+            disabled={!authorized || starting}
             className={`
               w-full py-3.5 text-[13px] font-semibold tracking-[0.02em] transition-all duration-200
-              ${authorized
+              ${authorized && !starting
                 ? "bg-[#22d3a6] text-[#0b0a0a] hover:bg-[#1ec49a] cursor-pointer"
                 : "bg-[#1e1c1c] text-[#3a3836] cursor-not-allowed"
               }
             `}
           >
-            {authorized ? "Start Scan →" : "Authorize scan to continue"}
+            {!authorized ? "Authorize scan to continue" : starting ? "Starting…" : "Start Scan →"}
           </button>
         </div>
       </div>

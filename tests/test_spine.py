@@ -200,10 +200,95 @@ def test_code_scan_finds_vulns():
         assert any(":" in f.where for f in found)
 
 
+def test_local_api():
+    """The UI bridge: refuses what it should, and runs a real scan end to end."""
+    import json as _json, os, tempfile, threading, time, urllib.error, urllib.request
+    from http.server import ThreadingHTTPServer
+    from webscanx import server as api
+
+    httpd = ThreadingHTTPServer(("127.0.0.1", 0), api.Handler)
+    threading.Thread(target=httpd.serve_forever, daemon=True).start()
+    base = "http://127.0.0.1:%d" % httpd.server_address[1]
+
+    def post(body, origin=None):
+        req = urllib.request.Request(
+            base + "/api/scan", data=_json.dumps(body).encode(),
+            headers={"Content-Type": "application/json"}, method="POST")
+        if origin:
+            req.add_header("Origin", origin)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as r:
+                return r.status, _json.loads(r.read())
+        except urllib.error.HTTPError as e:
+            return e.code, _json.loads(e.read())
+
+    def get(path, origin=None):
+        req = urllib.request.Request(base + path)
+        if origin:
+            req.add_header("Origin", origin)
+        try:
+            with urllib.request.urlopen(req, timeout=10) as r:
+                return r.status, r.read()
+        except urllib.error.HTTPError as e:
+            return e.code, e.read()
+
+    try:
+        # the permission gate survives the move to HTTP
+        code, doc = post({"target": "http://example.com"})
+        assert code == 400 and "refused" in doc["error"], doc
+
+        # a hostile page must not be able to drive the scanner
+        code, doc = post({"target": "http://example.com", "authorized": True},
+                         origin="https://evil.example")
+        assert code == 403, doc
+
+        # junk in, honest error out
+        assert post({"target": ""})[0] == 400
+        assert post({"target": "not a url or folder"})[0] == 400
+
+        # a real code scan, start to finished report
+        with tempfile.TemporaryDirectory() as d:
+            with open(os.path.join(d, "app.py"), "w", encoding="utf-8") as fh:
+                fh.write('password = "hunter2secret"\nDEBUG = True\n')
+            code, job = post({"target": d, "kind": "code"},
+                             origin="http://localhost:5173")
+            assert code == 202, job
+            assert job["progress"]["total"] > 0, "no code scanners registered"
+
+            deadline = time.time() + 60
+            while time.time() < deadline:
+                _, doc = get("/api/scan/" + job["id"])
+                doc = _json.loads(doc)
+                if doc["state"] in ("done", "error"):
+                    break
+                time.sleep(0.1)
+            assert doc["state"] == "done", doc.get("error")
+            assert doc["findings"], "code scan through the API found nothing"
+            first = doc["findings"][0]
+            assert set(first) >= {"id", "severity", "name", "path", "module",
+                                  "what", "howToCheck", "evidence", "fix", "refs"}
+            assert doc["progress"]["done"] == doc["progress"]["total"]
+
+            code, blob = get("/api/scan/%s/report?format=html" % job["id"])
+            assert code == 200 and b"<html" in blob.lower()
+            assert get("/api/scan/%s/report?format=nope" % job["id"])[0] == 400
+            assert get("/api/scan/nosuchid")[0] == 404
+
+            _, listing = get("/api/scans")
+            assert any(s["id"] == job["id"] for s in _json.loads(listing)["scans"])
+    finally:
+        httpd.shutdown()
+        httpd.server_close()
+        api._JOBS.clear()
+        api._ORDER.clear()
+    print("server.py: ok")
+
+
 if __name__ == "__main__":
     test_module_demos_pass()
     test_end_to_end_cli()
     test_web_scan_finds_vulns()
     test_mixed_content_scanner()
     test_code_scan_finds_vulns()
+    test_local_api()
     print("\nall spine self-checks passed")

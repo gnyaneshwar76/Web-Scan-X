@@ -1,5 +1,13 @@
-import { useState, type ReactNode } from "react";
-import { FINDINGS, SCAN_META, SEV_COLORS, type Severity, type Finding } from "@/data/findings";
+import { useEffect, useState, type ReactNode } from "react";
+import { SCAN_META, SEV_COLORS, type Severity, type Finding } from "@/data/findings";
+import {
+  countsOf,
+  findingsOf,
+  isSampleData,
+  restoreCurrentScan,
+  useCurrentScan,
+  watchScan,
+} from "@/data/api";
 import CopyButton from "@/components/CopyButton";
 import ExportModal from "./ExportModal";
 
@@ -22,9 +30,6 @@ const DETAIL_TABS: { key: DetailTab; label: string }[] = [
   { key: "refs", label: "Refs" },
 ];
 
-const { counts } = SCAN_META;
-const TOTAL = counts.high + counts.medium + counts.low + counts.info;
-
 function SevBadge({ sev }: { sev: Severity }) {
   const s = SEV_COLORS[sev];
   return (
@@ -44,27 +49,63 @@ function SectionLabel({ children }: { children: ReactNode }) {
 }
 
 export default function Results() {
-  const [selectedId, setSelectedId] = useState(FINDINGS[0].id);
+  const job = useCurrentScan();
+  const [selectedId, setSelectedId] = useState<number | null>(null);
   const [filter, setFilter] = useState<Filter>("All");
   const [search, setSearch] = useState("");
   const [showExport, setShowExport] = useState(false);
   const [activeTab, setActiveTab] = useState<DetailTab>("what");
+
+  // Landing straight on this URL should still find the scan this tab started.
+  useEffect(() => {
+    let stop: (() => void) | undefined;
+    restoreCurrentScan().then((restored) => {
+      if (restored?.state === "running") stop = watchScan(restored.id);
+    });
+    return () => stop?.();
+  }, []);
 
   function select(id: number) {
     setSelectedId(id);
     setActiveTab("what");
   }
 
-  const filtered = FINDINGS.filter((f) => {
+  const all = findingsOf(job);
+  const sample = isSampleData(job);
+  const sev = countsOf(job);
+  const counts = {
+    critical: sev.CRITICAL, high: sev.HIGH, medium: sev.MEDIUM,
+    low: sev.LOW, info: sev.INFO,
+  };
+  const TOTAL = all.length || 1;
+
+  const meta = job?.findings?.length
+    ? {
+        target: job.target,
+        dateDisplay: new Date(job.started).toLocaleString(),
+        tool: `WebScanX ${job.toolVersion}`,
+      }
+    : SCAN_META;
+
+  const filtered = all.filter((f) => {
     if (filter !== "All" && f.severity !== filter) return false;
     if (search && !f.name.toLowerCase().includes(search.toLowerCase())) return false;
     return true;
   });
 
-  const sel: Finding = FINDINGS.find((f) => f.id === selectedId) ?? FINDINGS[0];
+  const sel: Finding | undefined =
+    all.find((f) => f.id === selectedId) ?? all[0];
 
   const filterCount = (k: Filter) =>
-    k === "All" ? FINDINGS.length : FINDINGS.filter((f) => f.severity === k).length;
+    k === "All" ? all.length : all.filter((f) => f.severity === k).length;
+
+  if (!sel) {
+    return (
+      <div className="flex-1 flex items-center justify-center mono text-[12px] text-[#535050]">
+        No findings yet — start a scan.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full overflow-hidden">
@@ -76,21 +117,34 @@ export default function Results() {
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-3 mono text-[11px] mb-3">
               <span className="text-[#535050]">TARGET</span>
-              <span className="text-[#f0eeed] font-medium">{SCAN_META.target}</span>
+              <span className="text-[#f0eeed] font-medium">{meta.target}</span>
               <span className="text-[#1e1c1c]">·</span>
-              <span className="text-[#535050]">{SCAN_META.dateDisplay}</span>
+              <span className="text-[#535050]">{meta.dateDisplay}</span>
               <span className="text-[#1e1c1c]">·</span>
-              <span className="text-[#535050]">{SCAN_META.tool}</span>
+              <span className="text-[#535050]">{meta.tool}</span>
+              {sample && (
+                <>
+                  <span className="text-[#1e1c1c]">·</span>
+                  <span className="text-[#eab308]">sample data</span>
+                </>
+              )}
             </div>
 
             {/* Severity bar + counts */}
             <div className="flex items-center gap-4">
               <div className="flex h-[3px] w-36 overflow-hidden gap-px">
+                <div style={{ width: `${(counts.critical / TOTAL) * 100}%`, backgroundColor: SEV_COLORS.CRITICAL.bar }} />
                 <div style={{ width: `${(counts.high / TOTAL) * 100}%`, backgroundColor: SEV_COLORS.HIGH.bar }} />
                 <div style={{ width: `${(counts.medium / TOTAL) * 100}%`, backgroundColor: SEV_COLORS.MEDIUM.bar }} />
                 <div style={{ width: `${(counts.low / TOTAL) * 100}%`, backgroundColor: SEV_COLORS.LOW.bar }} />
               </div>
               <div className="flex items-center gap-4 mono text-[11px]">
+                {counts.critical > 0 && (
+                  <span className="flex items-center gap-1.5">
+                    <span className="w-1.5 h-1.5 inline-block" style={{ backgroundColor: SEV_COLORS.CRITICAL.bar }} />
+                    <span className="font-semibold" style={{ color: SEV_COLORS.CRITICAL.bar }}>{counts.critical} Critical</span>
+                  </span>
+                )}
                 <span className="flex items-center gap-1.5">
                   <span className="w-1.5 h-1.5 inline-block" style={{ backgroundColor: SEV_COLORS.HIGH.bar }} />
                   <span className="font-semibold" style={{ color: SEV_COLORS.HIGH.bar }}>{counts.high} High</span>
@@ -253,10 +307,12 @@ export default function Results() {
                 <div>
                   <SectionLabel>How to verify</SectionLabel>
                   <p className="text-[13px] text-[#8a8785] leading-relaxed mb-3">{sel.howToCheck}</p>
-                  <div className="bg-[#111010] border border-[#1e1c1c] px-4 py-3 flex items-start gap-3">
-                    <span className="mono text-[11px] text-[#f0eeed] flex-1 break-all leading-relaxed">{sel.checkCommand}</span>
-                    <CopyButton text={sel.checkCommand} className="shrink-0 mt-0.5" />
-                  </div>
+                  {sel.checkCommand && (
+                    <div className="bg-[#111010] border border-[#1e1c1c] px-4 py-3 flex items-start gap-3">
+                      <span className="mono text-[11px] text-[#f0eeed] flex-1 break-all leading-relaxed">{sel.checkCommand}</span>
+                      <CopyButton text={sel.checkCommand} className="shrink-0 mt-0.5" />
+                    </div>
+                  )}
                 </div>
                 <div>
                   <SectionLabel>Scanner evidence</SectionLabel>

@@ -1,5 +1,6 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { SEV_COLORS } from "@/data/findings";
+import { getScan, listScans, setCurrentScan, type ScanJob } from "@/data/api";
 import ExportModal from "./ExportModal";
 
 type ScanRow = {
@@ -13,6 +14,26 @@ type ScanRow = {
   low: number;
 };
 
+function duration(job: ScanJob): string {
+  if (!job.finished) return "—";
+  const secs = Math.max(0, Math.round((Date.parse(job.finished) - Date.parse(job.started)) / 1000));
+  return `${Math.floor(secs / 60)}m ${String(secs % 60).padStart(2, "0")}s`;
+}
+
+function toRow(job: ScanJob): ScanRow {
+  return {
+    id: job.id,
+    date: job.started.slice(0, 10),
+    target: job.target,
+    depth: `${job.progress.total} mods`,
+    duration: duration(job),
+    high: (job.counts.High ?? 0) + (job.counts.Critical ?? 0),
+    medium: job.counts.Medium ?? 0,
+    low: job.counts.Low ?? 0,
+  };
+}
+
+// Shown only when the engine isn't running (design preview).
 const ROWS: ScanRow[] = [
   { id: "1", date: "2026-09-15", target: "http://127.0.0.1:63725/",        depth: "Standard", duration: "0m 0s",   high: 3, medium: 2, low: 3 },
   { id: "2", date: "2026-09-14", target: "https://staging.example.com",    depth: "Standard", duration: "3m 42s",  high: 2, medium: 3, low: 5 },
@@ -51,10 +72,34 @@ export default function History() {
   const [search, setSearch] = useState("");
   const [showExport, setShowExport] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
+  const [live, setLive] = useState<ScanJob[] | null>(null);
 
-  const filtered = ROWS.filter((r) =>
+  useEffect(() => {
+    listScans().then(setLive).catch(() => setLive(null));
+  }, []);
+
+  const rows = live?.length ? live.map(toRow) : ROWS;
+  const sample = !live?.length;
+
+  const filtered = rows.filter((r) =>
     r.target.toLowerCase().includes(search.toLowerCase())
   );
+
+  /** Make `id` the scan every other screen is looking at. */
+  async function load(id: string): Promise<boolean> {
+    if (sample) return false;
+    try {
+      setCurrentScan(await getScan(id));
+      return true;
+    } catch {
+      return false;  // the engine went away
+    }
+  }
+
+  async function open(id: string) {
+    await load(id);
+    window.location.hash = "/dashboard/results";
+  }
 
   return (
     <div className="flex-1 overflow-y-auto">
@@ -64,7 +109,9 @@ export default function History() {
         <div className="flex flex-wrap items-end justify-between gap-4 mb-6">
           <div>
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#f0eeed]">History</h1>
-            <p className="mono text-[11px] text-[#3a3836] mt-1">~/.webscanx/scans</p>
+            <p className="mono text-[11px] text-[#3a3836] mt-1">
+              {sample ? "sample data" : "held by the running engine"}
+            </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <input
@@ -113,13 +160,13 @@ export default function History() {
               </div>
               <div className="w-[100px] shrink-0 flex items-center justify-end gap-3 mono text-[11px]">
                 <button
-                  onClick={() => { window.location.hash = "/dashboard/results"; }}
+                  onClick={() => open(r.id)}
                   className="text-[#535050] hover:text-[#22d3a6] transition-colors duration-150"
                 >
                   Open
                 </button>
                 <button
-                  onClick={() => setShowExport(true)}
+                  onClick={async () => { await load(r.id); setShowExport(true); }}
                   className="text-[#535050] hover:text-[#f0eeed] transition-colors duration-150"
                 >
                   Export
@@ -133,7 +180,11 @@ export default function History() {
           </div>
         </div>
 
-        <p className="mono text-[10px] text-[#2a2828] mt-4">{ROWS.length} scans stored locally</p>
+        <p className="mono text-[10px] text-[#2a2828] mt-4">
+          {sample
+            ? `${ROWS.length} scans (sample data — start the engine to see your own)`
+            : `${rows.length} scans this engine session`}
+        </p>
       </div>
 
       {showExport && <ExportModal onClose={() => setShowExport(false)} />}

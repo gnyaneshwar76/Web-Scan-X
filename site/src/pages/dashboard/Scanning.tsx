@@ -40,12 +40,12 @@ export default function Scanning() {
 
       {/* Top bar */}
       <div className="flex flex-wrap items-center justify-between gap-4 mb-8">
-        <div className="flex items-center gap-3">
+        <div className="flex flex-wrap items-center gap-x-3 gap-y-1 min-w-0">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-[#22d3a6] live-pulse" />
             <span className="mono text-[11px] text-[#22d3a6] font-semibold tracking-[0.08em]">SCANNING</span>
           </div>
-          <span className="text-[14px] font-medium text-[#f0eeed]">https://staging.example.com</span>
+          <span className="text-[14px] font-medium text-[#f0eeed] truncate max-w-full">https://staging.example.com</span>
           <span className="mono text-[10px] px-2 py-0.5 border border-[#1e1c1c] text-[#535050] tracking-[0.06em]">STANDARD</span>
         </div>
         <div className="flex items-center gap-4">

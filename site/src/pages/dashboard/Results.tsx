@@ -156,10 +156,10 @@ export default function Results() {
       </div>
 
       {/* ── Split body ── */}
-      <div className="flex flex-1 overflow-hidden">
+      <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
 
         {/* Findings list */}
-        <div className="w-[52%] shrink-0 flex flex-col overflow-hidden border-r border-[#1e1c1c]">
+        <div className="w-full md:w-[52%] shrink-0 flex flex-col overflow-hidden max-h-[45%] md:max-h-none border-b md:border-b-0 md:border-r border-[#1e1c1c]">
           {/* Column header */}
           <div className="shrink-0 flex items-center px-4 py-2 border-b border-[#1e1c1c]">
             <span className="label-caps text-[#2a2828] w-[72px] shrink-0">Sev</span>

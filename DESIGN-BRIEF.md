@@ -91,9 +91,13 @@ root.
 
 ```bash
 cd site
-npm install
-npm run dev
+pnpm install
+pnpm run dev
 ```
+
+`site/.figma/make/site.json` (page title, description, language) is **not** part of the
+Figma Make zip export — without it `vite.config.ts` fails to load and the dev server will
+not start. It is committed now; keep it, and re-check it after every export.
 
 Shop at `/`, dashboard at `#/dashboard/new-scan`.
 
@@ -101,12 +105,24 @@ Shop at `/`, dashboard at `#/dashboard/new-scan`.
 
 ## Known gaps / next steps
 
-1. **Fixes made in `site/` are not yet back in Figma Make.** The severity colours in
-   `index.css` (`--color-sev-*`, `.sev-border-*`) and the error / delete-hover reds in
-   `NewScan.tsx` and `History.tsx` were corrected in the repo only. Re-apply them in
-   Figma Make before the next export.
+1. **Fixes made in `site/` are not yet back in Figma Make.** Re-apply all of these in
+   Figma Make before the next export, or the next export undoes them:
+   - the severity colours in `index.css` (`--color-sev-*`, `.sev-border-*`) and the
+     error / delete-hover reds in `NewScan.tsx` and `History.tsx`;
+   - the whole **mobile pass** below (`DashboardShell.tsx`, `Results.tsx`,
+     `Scanning.tsx`, `History.tsx`, `Settings.tsx`).
 2. **Download buttons are placeholders** — there is no built binary yet.
-3. **Mobile layout has not been reviewed** on the Figma Make build.
+3. ~~Mobile layout has not been reviewed.~~ **Done, 18 Sep 2026.** Reviewed at 375×812
+   on the real `site/` build; every route now has zero horizontal page overflow and
+   desktop is unchanged (all fixes are `md:`-gated). What changed:
+   - `DashboardShell.tsx` — the 200px sidebar is `hidden md:flex`. Below `md` the brand
+     block becomes a top bar and the same `NAV` array renders as a bottom tab bar.
+   - `Results.tsx` — the findings list and the detail panel stack (`flex-col md:flex-row`);
+     the list gets `max-h-[45%]` and a bottom rule instead of the right rule.
+   - `Scanning.tsx` — the target header wraps and the URL truncates.
+   - `History.tsx` — the fixed-width table sits in an `overflow-x-auto` /
+     `min-w-[560px]` scroller so the Target column stays readable; the filter row wraps.
+   - `Settings.tsx` — label/control rows stack below `md`; page gutter `px-5 md:px-8`.
 4. The Figma component file and `site/` can drift. The Figma file is for design and
    handoff; `site/` is what ships.
 5. Old files (`web/`, `design-preview/`, `index.html`, the Stitch docs) can be deleted

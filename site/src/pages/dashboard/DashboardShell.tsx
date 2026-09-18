@@ -71,9 +71,22 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const screen = useCurrentScreen();
 
   return (
-    <div className="flex h-screen bg-[#0b0a0a] text-[#f0eeed] overflow-hidden">
-      {/* ── Sidebar ── */}
-      <aside className="w-[200px] shrink-0 flex flex-col bg-[#0b0a0a] border-r border-[#1e1c1c]">
+    <div className="flex flex-col md:flex-row h-screen bg-[#0b0a0a] text-[#f0eeed] overflow-hidden">
+
+      {/* ── Mobile top bar (sidebar brand block, collapsed) ── */}
+      <header className="md:hidden shrink-0 flex items-center justify-between px-4 py-3 border-b border-[#1e1c1c]">
+        <div className="flex items-baseline gap-2">
+          <span className="font-semibold text-[14px] tracking-[-0.02em] text-[#f0eeed]">WebScanX</span>
+          <span className="mono text-[9px] text-[#535050] tracking-[0.06em] uppercase">v1.0</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-1.5 h-1.5 rounded-full bg-[#22d3a6] live-pulse" />
+          <span className="mono text-[10px] text-[#535050] tracking-[0.04em]">localhost:8080</span>
+        </div>
+      </header>
+
+      {/* ── Sidebar (desktop) ── */}
+      <aside className="hidden md:flex w-[200px] shrink-0 flex-col bg-[#0b0a0a] border-r border-[#1e1c1c]">
 
         {/* Brand */}
         <div className="px-5 pt-5 pb-4 border-b border-[#1e1c1c]">
@@ -139,6 +152,28 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       <main className="flex-1 flex flex-col overflow-hidden min-w-0">
         {children}
       </main>
+
+      {/* ── Mobile tab bar (same NAV as the sidebar) ── */}
+      <nav className="md:hidden shrink-0 flex border-t border-[#1e1c1c] bg-[#0b0a0a]">
+        {NAV.map(({ id, label, icon }) => {
+          const active = screen === id;
+          return (
+            <button
+              key={id}
+              onClick={() => navigate(id)}
+              className={`
+                flex-1 flex flex-col items-center gap-1 py-2.5 text-[10px] font-medium
+                transition-colors duration-150 relative min-w-0
+                ${active ? "text-[#f0eeed] bg-[#151414]" : "text-[#535050]"}
+              `}
+            >
+              {active && <span className="absolute top-0 left-0 right-0 h-[2px] bg-[#22d3a6]" />}
+              <span className={active ? "text-[#22d3a6]" : ""}>{icon}</span>
+              <span className="truncate max-w-full px-1">{label}</span>
+            </button>
+          );
+        })}
+      </nav>
     </div>
   );
 }

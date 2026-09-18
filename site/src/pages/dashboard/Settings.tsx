@@ -20,8 +20,8 @@ function load<T>(key: string, fallback: T): T {
 function Section({ label, description, children }: { label: string; description?: string; children: ReactNode }) {
   return (
     <div className="py-6 border-b border-[#1e1c1c] last:border-b-0">
-      <div className="flex items-start gap-8">
-        <div className="w-[180px] shrink-0">
+      <div className="flex flex-col md:flex-row md:items-start gap-3 md:gap-8">
+        <div className="w-full md:w-[180px] shrink-0">
           <p className="text-[13px] font-semibold text-[#f0eeed] mb-0.5">{label}</p>
           {description && <p className="text-[12px] text-[#3a3836] leading-relaxed mt-1">{description}</p>}
         </div>
@@ -53,7 +53,7 @@ export default function Settings() {
 
   return (
     <div className="flex-1 overflow-y-auto">
-      <div className="max-w-[720px] px-8 py-8">
+      <div className="max-w-[720px] px-5 md:px-8 py-8">
         <div className="mb-8">
           <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#f0eeed]">Settings</h1>
           <p className="text-[13px] text-[#535050] mt-1">Defaults applied to every new scan.</p>

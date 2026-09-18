@@ -66,13 +66,13 @@ export default function History() {
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#f0eeed]">History</h1>
             <p className="mono text-[11px] text-[#3a3836] mt-1">~/.webscanx/scans</p>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
             <input
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               placeholder="Filter targets…"
-              className="bg-[#111010] border border-[#1e1c1c] text-[#f0eeed] px-3 py-1.5 mono text-[11px] placeholder-[#2a2828] outline-none focus:border-[#22d3a6] transition-colors duration-150 w-[200px]"
+              className="bg-[#111010] border border-[#1e1c1c] text-[#f0eeed] px-3 py-1.5 mono text-[11px] placeholder-[#2a2828] outline-none focus:border-[#22d3a6] transition-colors duration-150 flex-1 min-w-[140px] sm:flex-none sm:w-[200px]"
             />
             <button className="mono text-[11px] border border-[#1e1c1c] px-3 py-1.5 text-[#3a3836] hover:text-[#535050] hover:border-[#2a2828] transition-colors duration-150 whitespace-nowrap">
               Compare two scans
@@ -81,7 +81,8 @@ export default function History() {
         </div>
 
         {/* Table */}
-        <div className="border border-[#1e1c1c]">
+        <div className="border border-[#1e1c1c] overflow-x-auto">
+          <div className="min-w-[560px]">
           {/* Header row */}
           <div className="flex items-center px-5 py-2.5 border-b border-[#1e1c1c] bg-[#111010]">
             <span className="label-caps text-[#2a2828] w-[90px] shrink-0">Date</span>
@@ -129,6 +130,7 @@ export default function History() {
               </div>
             </div>
           ))}
+          </div>
         </div>
 
         <p className="mono text-[10px] text-[#2a2828] mt-4">{ROWS.length} scans stored locally</p>

@@ -75,7 +75,12 @@ export default function History() {
   const [live, setLive] = useState<ScanJob[] | null>(null);
 
   useEffect(() => {
-    listScans().then(setLive).catch(() => setLive(null));
+    const load = () => listScans().then(setLive).catch(() => setLive(null));
+    load();
+    // The engine holds scans in memory only, so a restart empties it while this
+    // screen sits open. Re-read whenever the tab comes back to the front.
+    window.addEventListener("focus", load);
+    return () => window.removeEventListener("focus", load);
   }, []);
 
   const rows = live?.length ? live.map(toRow) : ROWS;
@@ -183,7 +188,7 @@ export default function History() {
         <p className="mono text-[10px] text-[#2a2828] mt-4">
           {sample
             ? `${ROWS.length} scans (sample data — start the engine to see your own)`
-            : `${rows.length} scans this engine session`}
+            : `${rows.length} ${rows.length === 1 ? "scan" : "scans"} this engine session`}
         </p>
       </div>
 

@@ -19,3 +19,6 @@ env/
 myreport.*
 e2e_report.*
 cli_check.*
+
+# Local-only backup (Claude memory incl. other projects, design zips)
+_backup/

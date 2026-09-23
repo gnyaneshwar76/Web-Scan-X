@@ -6,6 +6,52 @@ reset see `RESTORE.md`; for scan proofs see `../../WEB-TEST-LOG.md`.
 
 ---
 
+## 14–23 Sep 2026 — the design chat (Stitch → code prototype → Figma → Figma Make)
+
+Full transcript: `E:\WebScanX\_backup\conversations\webscanx-design-chat.md` (plus the
+raw zip). Local only — that chat contains a pasted API key, masked in the .md.
+
+**How the design got here**
+1. Three open questions settled: accent **mint `#22D3A6`** (red was already the
+   High/Critical colour, so a red button read as an alarm); severity fixed at
+   Critical `#FF3B30`, High `#EF4444`, Medium `#F97316`, Low `#EAB308`, Info `#8A8A8A`;
+   scope confirmed web-only, finds-and-explains-only.
+2. Both surfaces drafted in Google Stitch from one master prompt. Output read as
+   generated — bordered boxes everywhere, filler jargon, a sample report whose numbers
+   contradicted its own table. Kept only as reference (`STITCH-*.md`, `design-preview/`).
+3. scrolltide.co and getlayers.ai studied for composition (one cinematic hero, big
+   product visuals, space, few borders). Their colours and copy deliberately not copied.
+4. A working prototype hand-built in `web/` (plain HTML/CSS/JS) to prove the screens
+   actually work: authorization gate, simulated scan, filters, real file exports.
+5. Figma component library built (tokens, text styles, Severity Pill, Button, Nav Item,
+   Sidebar, Finding Row, Report + both pages). Built first in the college account by
+   mistake, then rebuilt in gnyaneshwar76@gmail.com, team "Andriod studio", file
+   `KV2plgQwDWEyVa2U4lUqmd`.
+6. **Figma Make became the source of truth**, exported into `site/` (React + Vite).
+7. Two review rounds on that build. Round one found the serious one: the Shop showed 18
+   invented findings while the Dashboard showed the 8 real engine findings, under the
+   words "nothing staged". Round two confirmed both surfaces now read one dataset,
+   `site/src/data/findings.ts`.
+8. Repo cleanup: `site/` committed, README rewritten, stray severity colours in
+   `index.css` and the error reds aligned to the locked palette.
+
+**Decisions worth not re-opening**
+- Mint for actions, never red. One severity system, always colour **and** text label.
+- The Shop's sample report and the Dashboard's Results screen stay the same component on
+  the same data — that is the whole trust argument.
+- Plain language in copy: no telemetry / thread-pool / "engine" jargon.
+- Figma Make authors the design; `site/` ships it. A fix made only in `site/` is undone
+  by the next export unless re-applied upstream.
+
+**What burned time (don't repeat)**
+- Pasting prompts into Stitch by hand and asking "see once" each round; driving the tool
+  through its MCP connection was far faster.
+- Building in whichever Figma account the connector was signed into — check `whoami` first.
+- Running Figma writes in parallel: page context leaked between calls and a page landed
+  on the wrong canvas. Keep Figma writes sequential; attach frames to their page explicitly.
+
+---
+
 ## 18–23 Sep 2026 — design↔engine connected, tested, backed up
 
 **What was done**

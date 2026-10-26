@@ -145,11 +145,14 @@ def _same_origin(a: str, b: str) -> bool:
 
 
 def crawl(root: str, timeout: float = 15.0,
-          max_pages: int = MAX_PAGES, max_depth: int = MAX_DEPTH) -> Sitemap:
+          max_pages: int = MAX_PAGES, max_depth: int = MAX_DEPTH,
+          extra_seeds=()) -> Sitemap:
     """Breadth-first, same-origin, capped. Never raises — bad pages are skipped."""
     site = Sitemap(root=root)
     queue: list[tuple[str, int]] = [(root, 0)]
     queue += [(u, 1) for u in _seed_urls(root, timeout)]
+    # AI-plan seeds: same-origin only (fetch() applies the SSRF guard); page caps apply below
+    queue += [(u, 1) for u in extra_seeds if isinstance(u, str) and _same_origin(u, root)]
     visited: set[str] = set()
 
     while queue and len(site.pages) < max_pages:
@@ -195,7 +198,8 @@ def get_sitemap(target, ctx) -> Sitemap:
         cached = crawl(target.location, timeout=ctx.timeout,
                        max_pages=getattr(ctx, "max_pages", None) or MAX_PAGES,
                        max_depth=getattr(ctx, "max_depth", None)
-                       if getattr(ctx, "max_depth", None) is not None else MAX_DEPTH)
+                       if getattr(ctx, "max_depth", None) is not None else MAX_DEPTH,
+                       extra_seeds=ctx.cache.get("extra_seeds") or ())
         ctx.cache["sitemap"] = cached
     return cached
 

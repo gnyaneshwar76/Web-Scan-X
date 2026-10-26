@@ -20,4 +20,6 @@ def to_json(report: Report) -> bytes:
         "total": report.total,
         "findings": [f.to_dict() for f in report.findings],
     }
+    if report.ai:
+        doc["ai"] = report.ai
     return json.dumps(doc, indent=2).encode("utf-8")

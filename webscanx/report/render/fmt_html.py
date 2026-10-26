@@ -5,7 +5,7 @@ import html as _html
 
 from ..report import Report
 from ...core.finding import Finding
-from ._registry import register
+from ._registry import AI_TITLE, ai_lines, ai_verdict, register
 
 
 # One severity palette, shared with the dashboard/shop design system. Colour is
@@ -81,7 +81,7 @@ def _stat_tiles(report: Report) -> str:
     return "".join(out)
 
 
-def _finding_card(i: int, f: "Finding") -> str:
+def _finding_card(i: int, f: "Finding", report: Report) -> str:
     from ...core.finding import Severity
     color = _SEV_COLOR.get(f.severity.label, "#8a8a8a")
     blocks = []
@@ -101,6 +101,9 @@ def _finding_card(i: int, f: "Finding") -> str:
             f'<li><a href="{_esc(r)}" rel="noopener noreferrer" target="_blank">'
             f'{_esc(r)}</a></li>' for r in f.references)
         blocks.append(f'<div class="block"><h3>References</h3><ul>{links}</ul></div>')
+    v, w = ai_verdict(report, f)
+    if v:
+        blocks.append(f'<div class="block"><h3>AI note (unchecked)</h3><p>{_esc(v)} - {_esc(w)}</p></div>')
     cat = f'<span class="cat">{_esc(f.category)}</span>' if f.category else ""
     fixed = '<span class="fixed">FIXED</span>' if f.fixed else ""
     # High/critical start expanded (act now); lower severities start collapsed.
@@ -127,7 +130,7 @@ def _finding_card(i: int, f: "Finding") -> str:
 @register("html", ".html")
 def to_html(report: Report) -> bytes:
     counts = report.counts()
-    findings = "".join(_finding_card(i, f) for i, f in enumerate(report.findings, 1))
+    findings = "".join(_finding_card(i, f, report) for i, f in enumerate(report.findings, 1))
     if not findings:
         findings = ('<div class="empty"><h2>No findings</h2>'
                     '<p>This scan found nothing to report.</p></div>')
@@ -159,6 +162,12 @@ def to_html(report: Report) -> bytes:
         ("Modules run", ", ".join(report.scanners_run) or "—"),
         ("Tool", f"WebScanX {report.tool_version}".strip()),
     ]
+    al = ai_lines(report)
+    ai_html = ""
+    if al:
+        ai_html = ('<section class="block" style="margin:0 0 24px;padding:16px 20px;background:var(--card);'
+                   'border:1px solid var(--rule);border-radius:14px">'
+                   f'<h3>{_esc(AI_TITLE)}</h3>' + "".join(f"<p>{_esc(x)}</p>" for x in al) + "</section>")
     meta_html = "".join(
         f'<div class="m"><span>{_esc(k)}</span><b>{_esc(v)}</b></div>'
         for k, v in meta)
@@ -346,6 +355,7 @@ footer{{margin-top:44px;text-align:center;color:var(--faint);font-size:13px}}
   </div>
 </section>
 <div class="meta">{meta_html}</div>
+{ai_html}
 {toolbar}
 {findings}
 <p class="noresult">No findings match your search.</p>

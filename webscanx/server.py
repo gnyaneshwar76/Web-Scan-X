@@ -101,8 +101,14 @@ def _finding_json(index: int, f: Finding) -> dict:
     }
 
 
+def _clean_ai(job: dict):
+    rep = job.get("report")
+    return rep.view().ai if rep is not None else None
+
+
 def _job_json(job: dict, *, with_findings: bool = True) -> dict:
     out = {
+        "ai": _clean_ai(job),
         "id": job["id"],
         "state": job["state"],
         "target": job["target"],
@@ -118,7 +124,7 @@ def _job_json(job: dict, *, with_findings: bool = True) -> dict:
         },
         "counts": job["counts"],
         "summary": job["summary"],
-        "error": job["error"],
+        "error": (job["error"] or "")[:300] or None,
     }
     if with_findings:
         out["findings"] = [_finding_json(i, f)
@@ -143,13 +149,26 @@ def _run_job(job: dict, ctx: engine.ScanContext, target: Target) -> None:
         web_http.set_rate(ctx.delay)  # thread-local: this scan only
         if target.kind is TargetKind.WEB:
             web_http.set_scope(target.location)
+            if job["ai_plan"]:
+                from .cli import apply_ai_plan
+                apply_ai_plan(ctx, target, job["ai_mode"], job["ai_model"])
+                with _LOCK:  # the plan may have narrowed the scanner list
+                    job["all_scanners"] = [n for n in job["all_scanners"] if n in ctx.only]
+                    job["current"] = job["all_scanners"][0] if job["all_scanners"] else None
         findings = engine.run(target, ctx, on_progress=progress)
         report = Report(target=target.location, target_kind=target.kind.value,
                         tool_version=__version__)
         report.scanners_run = job["all_scanners"]
         report.findings = findings
         report.finished = datetime.now(timezone.utc)
+        if job["ai_mode"] != "off":
+            try:
+                from .ai import enrich
+                enrich(report, job["ai_mode"], model=job["ai_model"])
+            except Exception:
+                pass  # AI is optional; the scan result stands without it
         with _LOCK:
+            job["ai"] = getattr(report, "ai", None)
             job["findings"] = findings
             job["report"] = report
             job["counts"] = report.counts()
@@ -176,14 +195,28 @@ def start_scan(body: dict) -> dict:
         if sum(j["state"] == "running" for j in _JOBS.values()) >= MAX_RUNNING:
             raise BusyError(f"{MAX_RUNNING} scans are already running - wait "
                             f"for one to finish")
-    for key in ("target", "kind"):
+    for key in ("target", "kind", "ai", "aiModel"):
         if body.get(key) is not None and not isinstance(body[key], str):
             raise ValueError(f"{key} must be a string")
     raw = (body.get("target") or "").strip()
     if not raw:
         raise ValueError("give a target (a URL, or a folder path with kind='code')")
 
-    if (body.get("kind") or "").lower() == "code":
+    kind = (body.get("kind") or "").lower()
+    if kind != "code" and not body.get("authorized"):  # before any filesystem access: no existence oracle
+        raise ValueError("refused: confirm you own this target or have written "
+                         "permission to test it (send authorized: true)")
+    if raw.startswith(("\\\\", "//")):
+        raise ValueError("network (UNC) paths are not allowed")
+    model = body.get("aiModel")
+    if model is not None and not re.fullmatch(r"[A-Za-z0-9._:/-]{1,80}", model):
+        raise ValueError("aiModel: max 80 chars of letters, digits and . _ : - /")
+    if kind in ("mobile", "desktop"):
+        path = Path(raw).expanduser()
+        if not (path.is_file() or path.is_dir()):
+            raise ValueError(f"no such file: {raw}")
+        target = Target(TargetKind(kind), str(path.resolve()), raw)
+    elif kind == "code":
         path = Path(raw).expanduser()
         if not path.is_dir():
             raise ValueError(f"not a folder: {raw}")
@@ -191,8 +224,10 @@ def start_scan(body: dict) -> dict:
     else:
         target = detect(raw)
 
+    if target.kind in (TargetKind.MOBILE, TargetKind.DESKTOP) and not Path(target.location).exists():
+        raise ValueError(f"no such file: {raw}")
     if target.kind is TargetKind.UNKNOWN:
-        raise ValueError(f"could not tell what {raw!r} is (not a URL or folder)")
+        raise ValueError(f"could not tell what {raw!r} is (not a URL, app file or folder)")
     if target.kind is not TargetKind.CODE and not body.get("authorized"):
         raise ValueError("refused: confirm you own this target or have written "
                          "permission to test it (send authorized: true)")
@@ -211,6 +246,12 @@ def start_scan(body: dict) -> dict:
             raise ValueError(f"{key} must be a number from {lo} to {hi}")
         return v
 
+    ai_mode = body.get("ai") or "off"
+    if ai_mode not in ("off", "local", "cloud"):
+        raise ValueError("ai must be off, local or cloud")
+    ai_plan = bool(body.get("aiPlan"))
+    if ai_plan and ai_mode == "off":
+        raise ValueError("aiPlan needs ai set to local or cloud")
     only, exclude = lst("only"), lst("exclude")
     bad = engine.unknown_names(only | exclude)
     if bad:
@@ -247,6 +288,10 @@ def start_scan(body: dict) -> dict:
         "counts": {},
         "summary": "",
         "error": None,
+        "ai": None,
+        "ai_mode": ai_mode,
+        "ai_model": body.get("aiModel") or None,
+        "ai_plan": ai_plan,
     }
     with _LOCK:
         if sum(j["state"] == "running" for j in _JOBS.values()) >= MAX_RUNNING:

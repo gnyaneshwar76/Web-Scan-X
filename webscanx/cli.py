@@ -32,7 +32,12 @@ def _confirm_permission(target: Target, assume_yes: bool) -> bool:
         return True  # scanning your own files on disk needs no target-owner consent
     if assume_yes:
         return True
-    prompt = (
+    if target.kind in (TargetKind.MOBILE, TargetKind.DESKTOP):
+        prompt = (f"\n  WebScanX will analyze this file: {target.location}\n"
+                  "  I own this file or have the right to analyze it.\n"
+                  "  Proceed? [y/N] ")
+    else:
+        prompt = (
         f"\n  WebScanX will actively scan: {target.location}\n"
         "  I own this target or have written permission to test it, and I will stay\n"
         "  within the scope I am authorized for. I will not scan third-party systems.\n"
@@ -45,6 +50,22 @@ def _confirm_permission(target: Target, assume_yes: bool) -> bool:
         return input(prompt).strip().lower() in ("y", "yes")
     except EOFError:
         return False
+
+
+def apply_ai_plan(ctx: engine.ScanContext, target: Target, mode: str, model) -> None:
+    """--ai-plan: let the AI pick scanners and extra URLs for a WEB target. Never raises."""
+    try:
+        from .ai import plan_scanners, extra_urls
+        from .scanners.web import http as web_http
+        html = web_http.fetch(target.location, timeout=ctx.timeout).body
+        # the plan may only narrow what the user already allowed, never re-add an exclusion
+        allowed = set(ctx.only) or {n for n, _ in engine.scanners_for(target.kind)}
+        picked = set(plan_scanners(target.location, html, sorted(allowed), mode, model)) & allowed
+        if picked:
+            ctx.only = (picked | {"web.headers", "web.tls"}) & allowed
+        ctx.cache["extra_seeds"] = extra_urls(target.location, html, mode, model)
+    except Exception as e:  # missing module or model trouble: scan without the plan
+        print(f"note: AI plan skipped ({type(e).__name__})", file=sys.stderr)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -79,6 +100,11 @@ def build_parser() -> argparse.ArgumentParser:
                    help="omit this finding from reports (repeatable)")
     p.add_argument("--redact", action="store_true",
                    help="mask secrets and query values in reports")
+    p.add_argument("--ai", choices=("off", "local", "cloud"), default="off",
+                   help="optional AI helper (default: off; cloud spends the ANTHROPIC_API_KEY of the machine running the engine)")
+    p.add_argument("--ai-model", metavar="NAME", help="model name for --ai")
+    p.add_argument("--ai-plan", action="store_true",
+                   help="let the AI choose scanners/URLs for a web target (needs --ai)")
     p.add_argument("-y", "--yes", action="store_true",
                    help="skip the permission prompt (you assert authorisation)")
     p.add_argument("--list-formats", action="store_true",
@@ -119,6 +145,13 @@ def main(argv: list[str] | None = None) -> int:
               f"or binary).", file=sys.stderr)
         return EXIT_ERROR
 
+    if target.kind in (TargetKind.MOBILE, TargetKind.DESKTOP) and not Path(target.location).exists():
+        print(f"error: no such file: {raw}", file=sys.stderr)
+        return EXIT_ERROR
+    if args.ai_plan and args.ai == "off":
+        print("error: --ai-plan needs --ai local or --ai cloud.", file=sys.stderr)
+        return EXIT_ERROR
+
     bad = engine.unknown_names(args.only)
     if bad:
         print(f"error: unknown scanner(s): {', '.join(bad)}. Known: "
@@ -141,12 +174,20 @@ def main(argv: list[str] | None = None) -> int:
         except ValueError as e:
             print(f"error: {e}", file=sys.stderr)
             return EXIT_ERROR
+    if args.ai_plan and target.kind is TargetKind.WEB:
+        apply_ai_plan(ctx, target, args.ai, args.ai_model)
     report = Report(target=target.location, target_kind=target.kind.value,
                     tool_version=__version__)
     report.scanners_run = [name for name, _ in engine.scanners_for(target.kind)
                            if not ctx.only or name in ctx.only]
     report.findings = engine.run(target, ctx)
     report.finished = datetime.now(timezone.utc)
+    if args.ai != "off":
+        try:
+            from .ai import enrich
+            enrich(report, args.ai, model=args.ai_model)
+        except Exception as e:
+            print(f"note: AI step skipped ({type(e).__name__})", file=sys.stderr)
 
     opts = render_mod.Options(evidence=not args.no_evidence,
                               ignored=frozenset(args.ignore), redact=args.redact)

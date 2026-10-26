@@ -1,12 +1,13 @@
 import { useEffect, useState } from "react";
 import { SEV_COLORS } from "@/data/findings";
-import { getScan, listScans, setCurrentScan, type ScanJob } from "@/data/api";
+import { getScan, kindLabel, listScans, setCurrentScan, type ScanJob } from "@/data/api";
 import ExportModal from "./ExportModal";
 
 type ScanRow = {
   id: string;
   date: string;
   target: string;
+  kind: string;
   depth: string;
   duration: string;
   high: number;
@@ -25,6 +26,7 @@ function toRow(job: ScanJob): ScanRow {
     id: job.id,
     date: job.started.slice(0, 10),
     target: job.target,
+    kind: kindLabel(job),
     depth: `${job.progress.total} mods`,
     duration: duration(job),
     high: (job.counts.High ?? 0) + (job.counts.Critical ?? 0),
@@ -148,6 +150,7 @@ export default function History() {
             >
               <span className="w-[90px] shrink-0 mono text-[11px] text-[#535050]">{r.date}</span>
               <span className="flex-1 min-w-0 mono text-[12px] text-[#f0eeed] truncate pr-4">{r.target}</span>
+              <span className="w-[70px] shrink-0 mono text-[10px] text-[#535050] tracking-[0.04em]">{r.kind}</span>
               <span className="w-[70px] shrink-0 mono text-[11px] text-[#3a3836] hidden sm:block">{r.depth}</span>
               <span className="w-[70px] shrink-0 mono text-[11px] text-[#3a3836] hidden md:block">{r.duration}</span>
               <div className="w-[150px] shrink-0">

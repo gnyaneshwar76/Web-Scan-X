@@ -21,6 +21,19 @@ export const API_BASE: string =
 
 export type ScanState = "running" | "done" | "error";
 
+export type AiMode = "off" | "local" | "cloud";
+export type AiVerdict = "real" | "likely-false-alarm" | "unsure";
+/** All AI text is untrusted: render as plain text only. */
+export type AiResult = {
+  mode: AiMode;
+  model?: string;
+  label?: string;
+  summary?: string;
+  fix_first?: string[];
+  notes?: Record<string, { verdict: AiVerdict; why: string }>;
+  error?: string;
+};
+
 export type ScanJob = {
   id: string;
   state: ScanState;
@@ -39,11 +52,29 @@ export type ScanJob = {
   summary: string;
   error: string | null;
   findings?: Finding[];
+  ai?: AiResult | null;
 };
+
+/** Short label for what was scanned, from the job's kind and target. */
+export function kindLabel(job: { kind?: string; target?: string } | null): string {
+  const k = job?.kind ?? "web";
+  if (k === "code") return "Code";
+  if (k === "web") return "Website";
+  const t = (job?.target ?? "").toLowerCase().replace(/[\\/]+$/, "");
+  if (/\.(apk|aab)$/.test(t)) return "Android";
+  if (/\.(ipa)$/.test(t)) return "iPhone";
+  if (/\.(exe|dll|msi|sys)$/.test(t)) return "Windows";
+  if (/\.(pkg|dmg|app)$/.test(t)) return "Mac";
+  return k === "mobile" ? "Mobile" : k === "desktop" ? "Desktop" : "Website";
+}
 
 export type StartScanRequest = {
   target: string;
-  kind?: "web" | "code";
+  kind?: "web" | "code" | "app";
+  ai?: AiMode;
+  aiModel?: string;
+  /** Web only: let the AI pick which checks fit the site. */
+  aiPlan?: boolean;
   authorized?: boolean;
   aggressive?: boolean;
   only?: string[];

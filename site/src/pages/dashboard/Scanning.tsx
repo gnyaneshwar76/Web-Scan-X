@@ -4,6 +4,7 @@ import {
   countsOf,
   findingsOf,
   isSampleData,
+  kindLabel,
   restoreCurrentScan,
   useCurrentScan,
   watchScan,
@@ -85,7 +86,7 @@ export default function Scanning() {
             {job?.target ?? "https://staging.example.com"}
           </span>
           <span className="mono text-[10px] px-2 py-0.5 border border-[#1e1c1c] text-[#535050] tracking-[0.06em]">
-            {(job?.kind ?? "web").toUpperCase()}
+            {kindLabel(job).toUpperCase()}
           </span>
         </div>
         <div className="flex items-center gap-4">

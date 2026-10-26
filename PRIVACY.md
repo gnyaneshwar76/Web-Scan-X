@@ -22,8 +22,19 @@ When you run a scan, WebScanX processes data on your machine:
 - The dashboard keeps small preferences in your browser (`localStorage`: scan depth, enabled modules, rate limit) and the id of the current scan (`sessionStorage`). No scan results are stored there.
 - The dashboard loads no external fonts, CDNs, scripts or analytics. It uses system fonts only.
 
+## App files
+If you give WebScanX an app file (`.apk`, `.aab`, `.ipa`, `.exe`, `.dll`, `.sys`, `.msi`, `.app`, `.pkg`), it is read locally only. It is not executed, installed or uploaded. Findings can quote short strings found inside the file (such as URLs or keys), masked where the scanner masks them.
+
+## Optional AI helper (off by default)
+The AI helper is off unless you pass `--ai local` or `--ai cloud` (or turn it on in the dashboard/API).
+- **Local mode** sends data only to Ollama on `127.0.0.1` on your own machine. Nothing leaves your computer. This mode sees the unredacted findings.
+- **Cloud mode** is an explicit opt-in and needs your `ANTHROPIC_API_KEY`. It sends data over the internet to Anthropic's API (`api.anthropic.com`): a **redacted** copy of up to 60 findings (id, title, severity, scanner, location, description, and evidence cut to 300 characters), plus your API key to authenticate. If you also use "AI choose checks" (`--ai-plan`), it sends the target URL and the first 8000 characters of the homepage, with sensitive-looking values masked. Masking is pattern-based and can miss values; the findings and page can still describe the target.
+- **To keep everything local:** do not use `--ai cloud`; use `--ai local` or no `--ai`.
+- The authors do not receive this data; Anthropic processes it under its own terms and privacy policy, and your API key account applies.
+- [Lawyer: Anthropic acts as a third-party processor/recipient of data that may include personal data of the scanned system's users. Confirm roles, transfer rules (EU/UK/India cross-border), whether the user or the project must give notice, and wording of the opt-in.]
+
 ## What is never sent anywhere
-WebScanX does not send target URLs, responses, findings, reports, cookies, secrets or your IP address to its authors or to any third party. There is no crash reporting, update check or telemetry in the code.
+Apart from the opt-in cloud AI mode above, WebScanX does not send target URLs, responses, findings, reports, cookies, secrets or your IP address to its authors or to any third party. There is no crash reporting, update check or telemetry in the code.
 
 ## Redaction
 Reports can mask sensitive values: hosts, query values, values after `Authorization`, `Cookie`, `Set-Cookie`, `password`, `token`, `secret`, `api key`, and long mixed letter-digit tokens. In the dashboard's Export dialog, "Redact" is on by default. In the CLI it is off unless you pass `--redact`. Redaction is pattern-based and may miss some values; review a report before you share it.

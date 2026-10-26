@@ -41,6 +41,38 @@ def _mask(s: str) -> str:
     return _TOKEN.sub(lambda m: m.group(0)[:4] + "***", s)
 
 
+_VERDICTS = ("real", "likely-false-alarm", "unsure")
+_CAP = {"summary": 2000, "why": 500, "model": 80, "error": 300}
+
+
+def _txt(v, cap: int) -> str:
+    return " ".join(v.split())[:cap] if isinstance(v, str) else ""
+
+
+def clean_ai(ai, fingerprints, mask=None) -> dict | None:
+    """Model output is untrusted: keep only known keys, known fingerprints and
+    verdicts, cap lengths, and (if mask) redact the text. Never raises."""
+    if not isinstance(ai, dict):
+        return None
+    m = mask or (lambda x: x)
+    known = set(fingerprints)
+    out = {"mode": ai.get("mode") if ai.get("mode") in ("local", "cloud") else "",
+           "model": m(_txt(ai.get("model"), _CAP["model"])),
+           "summary": m(_txt(ai.get("summary"), _CAP["summary"])),
+           "fix_first": [], "notes": {}}
+    ff = ai.get("fix_first")
+    for fp in ff[:50] if isinstance(ff, list) else []:
+        if isinstance(fp, str) and fp in known and fp not in out["fix_first"]:
+            out["fix_first"].append(fp)
+    notes = ai.get("notes")
+    for fp, n in (notes.items() if isinstance(notes, dict) else []):
+        if fp in known and isinstance(n, dict) and n.get("verdict") in _VERDICTS:
+            out["notes"][fp] = {"verdict": n["verdict"], "why": m(_txt(n.get("why"), _CAP["why"]))}
+    if ai.get("error"):
+        out["error"] = m(_txt(ai["error"], _CAP["error"])) or "AI step failed"
+    return out
+
+
 @dataclass
 class Report:
     target: str
@@ -51,6 +83,7 @@ class Report:
     tool_version: str = ""
     scanners_run: list[str] = field(default_factory=list)
     options: Options = field(default_factory=Options)
+    ai: dict | None = None   # optional, from webscanx.ai; shown beside findings, never changes them
 
     def view(self, options: Options | None = None) -> "Report":
         """A copy with the options applied; the original is never changed."""
@@ -67,7 +100,8 @@ class Report:
                     ch[k] = _mask(ch.get(k, getattr(f, k)))
                 ch["references"] = [_mask(x) for x in f.references]
             out.append(replace(f, **ch) if ch else f)
-        return replace(self, findings=out, options=Options(),
+        ai = clean_ai(self.ai, [f.fingerprint for f in out], _mask if o.redact else None)
+        return replace(self, findings=out, options=Options(), ai=ai,
                        target=_mask(self.target) if o.redact else self.target)
 
     def counts(self) -> dict[str, int]:
@@ -106,6 +140,13 @@ def demo() -> None:
     v = r.view(Options(ignored=frozenset({r.findings[0].fingerprint}), redact=True))
     assert v.total == 2 and r.total == 3
     assert _mask("https://x/a?token=abcdef1234567890XYZ") == "https://<target>/a?token=REDACTED"
+    f0 = r.findings[1]
+    r.ai = {"summary": "see <b>x</b> https://h.test/?a=1", "fix_first": [f0.fingerprint, "bogus"],
+            "notes": {f0.fingerprint: {"verdict": "real", "why": "w"}, "bogus": {"verdict": "real"},
+                      r.findings[2].fingerprint: {"verdict": "evil"}}}
+    c = r.view().ai
+    assert c["fix_first"] == [f0.fingerprint] and list(c["notes"]) == [f0.fingerprint]
+    assert "h.test" not in r.view(Options(redact=True)).ai["summary"] and clean_ai("x", []) is None
     print("report.py: ok")
 
 

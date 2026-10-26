@@ -37,12 +37,16 @@ export default function Settings() {
     () => load("ws_modules", Object.fromEntries(MODULES.map((m) => [m.id, true])))
   );
   const [rateLimit, setRateLimit] = useState(() => load<string>("ws_rate", "10"));
+  const [ai, setAi] = useState<"off" | "local" | "cloud">(() => load("ws_ai", "off"));
+  const [aiModel, setAiModel] = useState(() => load<string>("ws_ai_model", ""));
   const [saved, setSaved] = useState(false);
 
   function handleSave() {
     localStorage.setItem("ws_depth", JSON.stringify(depth));
     localStorage.setItem("ws_modules", JSON.stringify(modules));
     localStorage.setItem("ws_rate", JSON.stringify(rateLimit));
+    localStorage.setItem("ws_ai", JSON.stringify(ai));
+    localStorage.setItem("ws_ai_model", JSON.stringify(aiModel.trim()));
     setSaved(true);
     setTimeout(() => setSaved(false), 2000);
   }
@@ -99,6 +103,31 @@ export default function Settings() {
                 </label>
               ))}
             </div>
+          </Section>
+
+          {/* AI helper */}
+          <Section label="AI helper" description="Optional. Never decides what is a vulnerability; its notes are suggestions to check.">
+            <div className="flex gap-0 border border-[#1e1c1c] mb-3">
+              {([["off", "Off"], ["local", "Local"], ["cloud", "Cloud"]] as const).map(([k, l], i) => (
+                <button
+                  key={k}
+                  onClick={() => setAi(k)}
+                  className={`flex-1 py-2.5 text-[13px] font-medium transition-colors duration-150 ${i < 2 ? "border-r border-[#1e1c1c]" : ""} ${ai === k ? "bg-[#22d3a6] text-[#0b0a0a]" : "bg-[#111010] text-[#535050] hover:text-[#f0eeed]"}`}
+                >
+                  {l}
+                </button>
+              ))}
+            </div>
+            <input
+              type="text"
+              value={aiModel}
+              onChange={(e) => setAiModel(e.target.value)}
+              placeholder="Model name (optional)"
+              className="w-full bg-[#111010] border border-[#1e1c1c] text-[#f0eeed] px-3 py-2.5 mono text-[12px] placeholder-[#353332] outline-none focus:border-[#22d3a6] transition-colors duration-150"
+            />
+            <p className="text-[11px] text-[#535050] mt-2 leading-relaxed">
+              Local uses Ollama on this computer. Cloud sends a redacted summary of findings to Anthropic and needs ANTHROPIC_API_KEY set where the engine runs.
+            </p>
           </Section>
 
           {/* Report folder */}

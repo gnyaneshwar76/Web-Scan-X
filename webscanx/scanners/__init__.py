@@ -7,3 +7,4 @@ the same way in later phases.
 
 from . import web  # noqa: F401  (import = register web.* scanners)
 from . import code  # noqa: F401  (import = register code.* scanners)
+from . import app  # noqa: F401  (import = register app.* scanners: mobile + desktop packages)

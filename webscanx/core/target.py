@@ -21,8 +21,8 @@ class TargetKind(enum.Enum):
     UNKNOWN = "unknown"
 
 
-_EXECUTABLE_EXTS = {".exe", ".dll", ".so", ".dylib", ".bin", ".app", ".msi"}
-_MOBILE_EXTS = {".apk", ".ipa", ".aab"}
+_DESKTOP_EXTS = {".exe", ".dll", ".msi", ".sys", ".dmg", ".pkg"}
+_MOBILE_EXTS = {".apk", ".aab", ".ipa"}
 
 
 @dataclass
@@ -49,11 +49,13 @@ def detect(raw: str) -> Target:
     path = os.path.abspath(os.path.expanduser(s))
     ext = os.path.splitext(path)[1].lower()
 
+    if ext == ".app" and os.path.isdir(path):  # macOS bundle, before "directory = CODE"
+        return Target(TargetKind.DESKTOP, path, raw)
     if os.path.isdir(path):
         return Target(TargetKind.CODE, path, raw)
     if ext in _MOBILE_EXTS:
         return Target(TargetKind.MOBILE, path, raw)
-    if ext in _EXECUTABLE_EXTS:
+    if ext in _DESKTOP_EXTS:
         return Target(TargetKind.DESKTOP, path, raw)
     # A bare host like "example.com" is a common shorthand for a web target.
     # (Its ".com" trips splitext, so don't gate on ext here — just make sure
@@ -72,6 +74,15 @@ def demo() -> None:
     assert detect(".").kind is TargetKind.CODE          # cwd is a directory
     assert detect("app.apk").kind is TargetKind.MOBILE
     assert detect("tool.exe").kind is TargetKind.DESKTOP
+    for e in (".aab", ".ipa"):
+        assert detect("a" + e).kind is TargetKind.MOBILE
+    for e in (".dll", ".msi", ".sys", ".dmg", ".pkg"):
+        assert detect("a" + e).kind is TargetKind.DESKTOP
+    import tempfile
+    with tempfile.TemporaryDirectory() as d:
+        bundle = os.path.join(d, "X.app")
+        os.mkdir(bundle)
+        assert detect(bundle).kind is TargetKind.DESKTOP
     assert detect("nonsense not a path").kind is TargetKind.UNKNOWN
     assert detect(".").is_owned_code and not detect("https://x.com").is_owned_code
     print("target.py: ok")

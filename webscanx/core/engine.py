@@ -76,9 +76,9 @@ def run(target: Target, ctx: ScanContext | None = None,
 
 
 def demo() -> None:
-    # Use MOBILE — no real scanners register there yet — so the dedupe check stays
-    # isolated from the live web.* / code.* scanners when this runs inside the suite.
-    dummy_kind = TargetKind.MOBILE
+    # UNKNOWN never gets real scanners, so the dedupe check stays isolated from the
+    # live web.* / code.* / app.* scanners when this runs inside the suite.
+    dummy_kind = TargetKind.UNKNOWN
 
     @register(dummy_kind, "demo.dummy")
     def _dummy(target, ctx):
@@ -86,14 +86,15 @@ def demo() -> None:
         yield Finding("Example", "low", target.location, "demo.dummy")  # dupe
 
     seen_progress: list[tuple[str, int]] = []
-    findings = run(Target(dummy_kind, "app.apk", "app.apk"),
+    findings = run(Target(dummy_kind, "x", "x"),
                    on_progress=lambda name, fresh: seen_progress.append((name, len(fresh))))
     assert len(findings) == 1, "duplicates must collapse to one"
     assert seen_progress == [("demo.dummy", 1)], "progress reports deduped findings"
     assert findings[0].scanner == "demo.dummy"
-    # A kind with no registered scanners -> empty, no crash (offline, no network).
-    assert run(Target(TargetKind.DESKTOP, "x.exe", "x.exe")) == []
+    # `only` filters by name; an unregistered kind -> empty, no crash (offline).
+    assert run(Target(dummy_kind, "x", "x"), ScanContext(only={"nope"})) == []
     _REGISTRY.pop(dummy_kind, None)  # keep the demo self-contained
+    assert run(Target(dummy_kind, "x", "x")) == []
     print("engine.py: ok")
 
 

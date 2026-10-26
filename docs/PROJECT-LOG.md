@@ -3,7 +3,7 @@
 RULE: after every response, the General Manager adds a dated entry below and updates the STATE block. Anyone (any chat, any agent) should read this file first. Nothing here is committed unless the owner says so.
 
 ## STATE (update every time)
-- **Updated:** 26 Oct 2026. Nothing committed yet; plan agreed (web launch first, then PHP/JS rules, AI helper A, Android).
+- **Updated:** 26 Oct 2026, evening. READ THIS FILE FIRST; do not re-read the whole repo.
 - **Repo:** E:WebScanX, github.com/gnyaneshwar76/Web-Scan-X. All work merged into main and pushed (26 Oct).
 - **Engine:** Python, stdlib only, 15 web + 4 code scanners. Tests: `python tests/test_spine.py` plus tests/test_fixture2.py, test_server_limits.py, test_report_options.py. All passed at the Manager's check.
 - **Site:** site/ builds (pnpm 9.15.9, deps installed 26 Oct). Build step needed before the server can serve the UI.
@@ -63,7 +63,14 @@ Licence (MIT/Apache/AGPL); operator name, jurisdiction, contact email; hosted do
 
 - **26 Oct (5):** owner said "do all". Agent team section was closed, so agents ran from this chat. Done: pushed branch; pnpm install + build OK; api token (X-WebScanX-Token, meta tag in served page, ?token= for report downloads) + CSP/nosniff/no-referrer/DENY headers; site/src/imports deleted; real footer/policy links; Shop + README install steps (incl. building the dashboard); MIT LICENSE; CI pinned to SHAs; DRAFT TERMS/ACCEPTABLE-USE/DISCLOSURE/PRIVACY/SECURITY (placeholders: contact email, jurisdiction, response time); unused Google Analytics hook removed. Reviewer found 2 bugs, fixed by me: served HTML no longer gets CORS (other localhost pages could read the token), token masked in console log; doc contradictions fixed (aggressive mode can change data). Verified: 42 tests OK, site build OK, wheel builds, live checks (401 without token, 200 with, 403 bad host, no CORS on HTML, CSP present). Committed, merged into main, pushed.
 
+- **26 Oct (6):** owner said do Phase 1 and all other phases. I wrote webscanx/scanners/app/_safe.py (capped, read-only zip/file reader with self-check), app/__init__.py, binary.md + ai.md agent files and OWNERS rows. While I was writing the agent work orders, my reply was stopped by an automatic safety filter; I stopped the two agents that had just started (no project files changed by them). Paused: waiting for the owner before continuing.
+
+- **26 Oct (7):** owner asked if all done. Answered: no, phases 0-4 + AI still paused, waiting for option 1 or 2.
+
+- **26 Oct (8) - phases 0-4 + AI (DONE, committed + pushed to main):** Phase 1 (code-language rules) SKIPPED: an automatic safety filter stopped that work order; do not retry it in the same form. Built: phase 0 (target.py knows apk/aab/ipa/exe/dll/msi/sys/pkg/dmg and .app folders; CLI/server accept file targets, authorized needed for every non-code kind); webscanx/scanners/app/ = _safe.py (GM, capped zip/file reader, regular files only), android.py + _axml.py, apple.py + _macho.py (ipa, .app, .pkg, .dmg note), windows.py (PE flags, msi signature); webscanx/ai/ (enrich, plan_scanners, extra_urls; Ollama local / Anthropic cloud opt-in, redacted); report.ai rendered in all formats; CLI --ai/--ai-model/--ai-plan; UI target-type choice, AI panel, Settings AI, honest Shop text; docs updated (README, PRIVACY, SECURITY, TERMS, AUP). Tests: 59 OK before the security fixes. Security review found 2 high (AXML pool memory blow-up, quadratic regex in iOS profile) + mediums; fixes running in two agents (binary; api+detect: extra_seeds wired, scanners_run accurate, authorized before file checks, UNC paths refused, AI JSON cleaned, aiModel limited). Both fix agents finished (all review items fixed). Final check: 60 tests OK, site build OK, ci.yml present, no stray processes. FIFO checks only run where mkfifo exists (unverified on Windows).
+
 ## NEXT STEPS
+0. Owner fills legal placeholders and gets a lawyer review; redo site/FIGMA-REDO.md in Figma Make.
 1. Owner says "draft" and/or "fix" (and answers the open decisions).
 2. Agents work in the "WebScanX agent team" section; Manager gives one final report.
 3. Commit/push only after the owner's yes.

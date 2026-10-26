@@ -18,6 +18,8 @@ WebScanX is a local tool: the engine and dashboard run on your machine and use o
 - **SSRF guard.** The target host is resolved once, every address is checked, and the connection goes to that vetted IP (no second lookup). Private, loopback, link-local and metadata ranges (including IPv4 embedded in IPv6) are refused; redirects are re-checked; proxy environment variables are ignored. The only exception is a loopback target you explicitly scan (such as the demo fixture), and then only that host may be contacted.
 - **Safe by default.** Probes are read-only. POST-form probes for XSS and SQL injection run only with `--aggressive` (API: `aggressive: true`), which may send requests that change data. WebScanX reports findings and does not fix or exploit them.
 - **Resource limits.** At most 2 scans run at once, request bodies are capped at 64 KB, timeouts and rate delay are bounded, and finished scans are kept in memory only (20 max).
+- **Hostile app files.** App files (.apk, .aab, .ipa, .exe, .dll, .sys, .msi, .app, .pkg) are treated as untrusted input. They are only read, never executed or installed. Caps: file size 1 GB, 50,000 archive entries, 2 GB declared uncompressed in total, 64 MB read from any one member, and archive members that compress more than 200x are refused (zip-bomb defence). Malformed files are refused with an error, not a crash.
+- **AI output is untrusted.** The AI helper is off by default. Its answer is parsed as JSON, limited to known finding ids and fixed verdicts, length-capped, and labelled "AI suggestion, check it". It never changes or creates findings; extra crawl URLs it proposes must be on the same origin and still pass the SSRF guard. Scanned content is sent to the model as data with an instruction not to follow it, which reduces but does not remove prompt-injection risk. Cloud mode sends a redacted copy only (see PRIVACY.md).
 - **No history on disk.** Reports are written only where you save them.
 
 ## Known limits
@@ -25,5 +27,7 @@ WebScanX is a local tool: the engine and dashboard run on your machine and use o
 - Any program running as you on the same machine can read the token (it is printed and in the served page) and so can drive scans; the token stops other websites, not local malware.
 - Redaction in reports is pattern-based and can miss values.
 - DNS pinning covers WebScanX's own connections; the scanner cannot verify that you are authorised, the confirmation is an honour-based gate.
+- App scans are static configuration and hardening checks, not malware detection or a full test; .aab, .msi and .pkg are partial.
+- AI suggestions can be wrong or manipulated by hostile content; check them.
 - Detection is heuristic: expect false positives and misses.
 - Not independently audited.

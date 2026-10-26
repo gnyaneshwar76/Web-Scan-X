@@ -27,3 +27,10 @@
 | laws | docs/legal/ |
 | policy | docs/policy/ |
 | privacy | PRIVACY.md, docs/privacy/ |
+
+## Added 26 Oct (phases 0-4 + AI)
+| Agent | Owns |
+|---|---|
+| binary | webscanx/scanners/app/* except _safe.py (android.py, apple.py with _macho.py, windows.py; one agent run per platform) |
+| ai | webscanx/ai/* |
+| General Manager | webscanx/scanners/app/_safe.py, webscanx/scanners/app/__init__.py, webscanx/scanners/__init__.py |

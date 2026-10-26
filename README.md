@@ -50,6 +50,33 @@ Before every scan you must confirm (wording pending lawyer review):
 > responsibility for this scan. Acceptable Use:
 > [docs/policy/ACCEPTABLE-USE.md](docs/policy/ACCEPTABLE-USE.md)
 
+## What it scans
+
+- **Websites** you are authorized to test (the default).
+- **Source-code folders** (`kind` code / a folder path).
+- **App files you give it, checked statically:** Android `.apk` / `.aab`, iPhone `.ipa`, Windows `.exe` / `.dll` / `.sys` / `.msi`, Mac `.app` / `.pkg`. For a `.dmg`, mount it first and scan the `.app` inside. WebScanX only reads these files: it never runs or installs them, and nothing is uploaded.
+
+Limits of app scanning: it runs configuration and hardening checks, not a full security test; it does not detect malware; `.aab`, `.msi` and `.pkg` are only partly checked. Only analyze app files you own or have the right to analyze (see [Acceptable Use](docs/policy/ACCEPTABLE-USE.md)).
+
+```bash
+webscanx path/to/app.apk
+webscanx path/to/setup.exe
+```
+
+## AI helper (optional, off by default)
+
+```bash
+webscanx https://your-site.example --ai local                 # Ollama on this machine only (127.0.0.1)
+webscanx https://your-site.example --ai local --ai-model NAME # pick the model
+webscanx https://your-site.example --ai cloud                 # needs env ANTHROPIC_API_KEY
+webscanx https://your-site.example --ai local --ai-plan       # AI chooses checks and extra pages to crawl
+```
+
+- `--ai local` talks only to Ollama on `127.0.0.1`; nothing leaves your machine.
+- `--ai cloud` is an explicit opt-in: a redacted summary of findings is sent to Anthropic's API (with `--ai-plan`, also a truncated, masked copy of the homepage). See [PRIVACY.md](PRIVACY.md).
+- The AI only reviews, ranks and explains. It never decides what is a vulnerability. Its output is labelled "AI suggestion, check it" and can be wrong.
+- `--ai-plan` needs `--ai local` or `--ai cloud`, and applies to web targets. If the AI fails, the scan result is unchanged.
+
 ## Running the design
 
 ```bash

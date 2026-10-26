@@ -421,12 +421,15 @@ function WhatItChecks() {
     { name: "TLS / certificates", desc: "Checks your HTTPS setup for old protocols and expiring certificates.", tags: "TLS 1.0 · ciphers · expiry" },
     { name: "SQL injection", desc: "Finds inputs that can reach your database and change its queries.", tags: "error-based · blind" },
     { name: "CSRF & cookies", desc: "Checks forms for anti-forgery tokens and cookies for safe flags.", tags: "tokens · SameSite · Secure" },
+    { name: "Your own source code", desc: "Point it at a folder of your own code for static checks of the files.", tags: "folder · static checks" },
+    { name: "App files", desc: "Basic static checks of Android, iPhone, Windows and Mac app files: configuration and hardening checks. Not a full test and no malware detection. .aab and .msi are limited; a .dmg must be mounted first.", tags: ".apk · .aab · .ipa · .exe · .dll · .msi · .sys · .pkg · .dmg · .app" },
+    { name: "AI helper (optional)", desc: "Off by default. Local first, cloud only if you opt in. It never decides what is a vulnerability; it only adds suggestions you should check yourself.", tags: "off · local · cloud" },
   ];
   return (
     <section id="what-it-checks" className="py-20 sm:py-32 max-w-[1200px] mx-auto px-6">
       <p className="mono text-xs tracking-widest text-[#9a9695] uppercase mb-4">WHAT IT CHECKS</p>
       <h2 className="text-4xl sm:text-[56px] font-bold tracking-tight text-[#f2f0ef] leading-[1.05] mb-10">
-        Five checks. Every finding explained.
+        Websites, your code, app files. Every finding explained.
       </h2>
       <div className="divide-y divide-[#2a2828] border-y border-[#2a2828]">
         {checks.map((c) => (
@@ -510,6 +513,8 @@ function Faq() {
     { q: "Is it legal to scan a website?", a: "You may only scan websites, web services, or staging environments that you own or have explicit written authorization to test. WebScanX enforces an authorization gate before each scan." },
     { q: "Does it fix vulnerabilities?", a: "No. v1 finds and explains each issue and shows you how to fix it yourself. It never changes your site." },
     { q: "What does it need to run?", a: "Python 3.10+ and nothing else. No browser, no Docker, no database." },
+    { q: "Can it scan apps and my own code?", a: "Yes, in a basic way. It runs static configuration and hardening checks on your own source code folders and on Android (.apk, .aab), iPhone (.ipa), Windows (.exe, .dll, .msi, .sys) and Mac (.pkg, .dmg, .app) files. It is not a full test and does not detect malware. .aab and .msi support is limited, and a .dmg must be mounted first. Only analyze files you own or have the right to analyze." },
+    { q: "Does it use AI?", a: "Only if you turn it on; it is off by default. Local mode uses Ollama on your computer and nothing leaves it. Cloud mode is opt-in and sends a redacted summary of findings to Anthropic (it needs ANTHROPIC_API_KEY where the engine runs). The AI never decides what is a vulnerability: the normal checks do that. Its notes are labelled as suggestions to check yourself." },
     { q: "Is it free?", a: "Yes. WebScanX v1 is free and open source under the MIT license." },
   ];
   return (

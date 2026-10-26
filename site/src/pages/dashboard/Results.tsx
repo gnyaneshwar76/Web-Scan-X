@@ -5,6 +5,7 @@ import {
   ignoreFinding,
   isIgnored,
   isSampleData,
+  kindLabel,
   restoreCurrentScan,
   useCurrentScan,
   watchScan,
@@ -97,8 +98,14 @@ export default function Results() {
     return true;
   });
 
+  const ai = job?.ai;
+  const fixFirst = (ai?.fix_first ?? [])
+    .map((fp) => all.find((f) => f.fingerprint === fp))
+    .filter((f): f is Finding => !!f);
   const sel: Finding | undefined =
     all.find((f) => f.id === selectedId) ?? all[0];
+
+  const note = sel?.fingerprint ? ai?.notes?.[sel.fingerprint] : undefined;
 
   const filterCount = (k: Filter) =>
     k === "All" ? all.length : all.filter((f) => f.severity === k).length;
@@ -120,7 +127,7 @@ export default function Results() {
           <div>
             {/* Meta */}
             <div className="flex flex-wrap items-center gap-3 mono text-[11px] mb-3">
-              <span className="text-[#535050]">TARGET</span>
+              <span className="text-[#535050]">{job?.findings?.length ? kindLabel(job).toUpperCase() : "TARGET"}</span>
               <span className="text-[#f0eeed] font-medium">{meta.target}</span>
               <span className="text-[#1e1c1c]">·</span>
               <span className="text-[#535050]">{meta.dateDisplay}</span>
@@ -173,6 +180,33 @@ export default function Results() {
           </button>
         </div>
       </header>
+
+      {ai?.summary && (
+        <div className="shrink-0 px-6 py-3 border-b border-[#1e1c1c] bg-[#0f0e0e]">
+          <p className="label-caps text-[#535050] mb-1.5">AI suggestions - check them yourself</p>
+          <p className="text-[12px] text-[#8a8785] leading-relaxed whitespace-pre-line max-w-[760px]">{ai.summary}</p>
+          {fixFirst.length > 0 && (
+            <div className="mt-2 flex flex-wrap items-center gap-2">
+              <span className="mono text-[10px] text-[#535050]">FIX FIRST</span>
+              {fixFirst.map((f) => (
+                <button
+                  key={f.id}
+                  onClick={() => { setFilter("All"); select(f.id); }}
+                  className="mono text-[10px] border border-[#1e1c1c] px-2 py-0.5 text-[#8a8785] hover:border-[#2a2828] max-w-[260px] truncate"
+                >
+                  <span style={{ color: SEV_COLORS[f.severity].bar }}>{f.severity}</span> {f.name}
+                </button>
+              ))}
+            </div>
+          )}
+          <p className="mono text-[10px] text-[#3a3836] mt-2">{ai.label || `AI helper (${ai.mode})`}{ai.model ? ` · ${ai.model}` : ""}</p>
+        </div>
+      )}
+      {ai?.error && (
+        <p className="shrink-0 px-6 py-1.5 border-b border-[#1e1c1c] mono text-[10px] text-[#3a3836]">
+          The AI step failed. Your results are unaffected.
+        </p>
+      )}
 
       {/* ── Filter bar ── */}
       <div className="shrink-0 border-b border-[#1e1c1c] flex items-center px-6">
@@ -276,6 +310,13 @@ export default function Results() {
               {sel.name}
             </h2>
             <p className="mono text-[10px] text-[#3a3836]">{sel.path}</p>
+            {note && (
+              <p className="mt-2 text-[12px] text-[#8a8785] leading-relaxed">
+                <span className="mono text-[10px] text-[#535050]">AI NOTE (suggestion, check it) </span>
+                <span className="mono text-[10px] text-[#f0eeed]">{String(note.verdict).toUpperCase()}</span>
+                {note.why ? ` - ${String(note.why)}` : ""}
+              </p>
+            )}
           </div>
 
           {/* Tabs */}

@@ -20,6 +20,9 @@ The software is licensed under the MIT License (see the LICENSE file). These Ter
 ## 4. Findings
 Reports may contain mistakes, miss problems, or flag things that are not problems. Check results yourself. A clean report does not mean a site is secure.
 
+## 4A. AI suggestions
+The optional AI helper only reviews, ranks and explains findings. Its output (labelled "AI suggestion, check it") may be wrong, incomplete or misleading. We give no warranty for it. In cloud mode your findings summary goes to a third party (Anthropic) as described in the Privacy Notice, under your own API account and its terms. Do not rely on AI output for any decision without checking it.
+
 ## 5. No warranty
 THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND, EXPRESS OR IMPLIED, INCLUDING FITNESS FOR A PARTICULAR PURPOSE AND NON-INFRINGEMENT.
 

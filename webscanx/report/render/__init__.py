@@ -43,6 +43,11 @@ def demo() -> None:
     assert json.loads(render(r, "json", Options(ignored=frozenset({r.findings[0].fingerprint}))))["total"] == 0
     assert b"secretsecret123456" not in render(r, "txt", Options(redact=True))
     assert set(formats()) >= {"json", "txt", "md", "csv", "sarif", "html", "pdf"}
+    fp = r.findings[0].fingerprint
+    r.ai = {"mode": "local", "model": "m", "summary": "AI-SUM", "fix_first": [fp],
+            "notes": {fp: {"verdict": "real", "why": "AI-WHY"}}}
+    for fmt in ("txt", "md", "html", "csv", "json", "sarif"):
+        assert b"AI-WHY" in render(r, fmt) or fmt == "sarif" and b"real" in render(r, fmt), fmt
     print("render: ok")
 
 

@@ -16,7 +16,7 @@ function Nav() {
           <a href="#what-it-checks" className="hover:text-[#f2f0ef] transition-colors">What it checks</a>
           <a href="#sample-report" className="hover:text-[#f2f0ef] transition-colors">Sample report</a>
           <a href="#faq" className="hover:text-[#f2f0ef] transition-colors">Docs</a>
-          <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-[#f2f0ef] transition-colors">GitHub</a>
+          <a href="https://github.com/gnyaneshwar76/Web-Scan-X" target="_blank" rel="noreferrer" className="hover:text-[#f2f0ef] transition-colors">GitHub</a>
         </nav>
         <a href="#download" className="inline-flex items-center justify-center bg-[#22d3a6] text-[#0d0c0c] font-semibold text-xs tracking-wider uppercase px-4 py-2 hover:bg-[#20c298] transition-colors whitespace-nowrap">
           Get started
@@ -482,12 +482,23 @@ function Download() {
         <h2 className="text-4xl sm:text-[56px] font-bold tracking-tight text-[#f2f0ef]">Run WebScanX locally</h2>
       </div>
       <div className="flex flex-col items-center gap-4">
+        <p className="text-sm text-[#9a9695]">Get it from <a href="https://github.com/gnyaneshwar76/Web-Scan-X" target="_blank" rel="noreferrer" className="underline text-[#7fe0b8]">github.com/gnyaneshwar76/Web-Scan-X</a> (clone it or download the ZIP), then in that folder:</p>
+        <div className="bg-[#151414] border border-[#2a2828] px-4 py-2.5 mono text-sm text-[#f2f0ef] flex items-center gap-3">
+          <span className="text-[#605d5d]">$</span>
+          <span>pip install .</span>
+          <CopyButton text="pip install ." />
+        </div>
+        <div className="bg-[#151414] border border-[#2a2828] px-4 py-2.5 mono text-sm text-[#f2f0ef] flex items-center gap-3">
+          <span className="text-[#605d5d]">$</span>
+          <span>cd site &amp;&amp; npx pnpm@9 install &amp;&amp; npx pnpm@9 run build &amp;&amp; cd ..</span>
+          <CopyButton text="cd site && npx pnpm@9 install && npx pnpm@9 run build && cd .." />
+        </div>
         <div className="bg-[#151414] border border-[#2a2828] px-4 py-2.5 mono text-sm text-[#f2f0ef] flex items-center gap-3">
           <span className="text-[#605d5d]">$</span>
           <span>python -m webscanx.server</span>
           <CopyButton text="python -m webscanx.server" />
         </div>
-        <p className="mono text-sm text-[#9a9695]">Then open http://127.0.0.1:8765</p>
+        <p className="mono text-sm text-[#9a9695]">Needs Python 3.10+ and Node.js (to build the dashboard once). Then open http://127.0.0.1:8765</p>
       </div>
     </section>
   );
@@ -522,7 +533,14 @@ function Faq() {
   );
 }
 
-const soon = ["Security policy", "License", "Responsible use", "Privacy"]; // no pages yet
+const REPO = "https://github.com/gnyaneshwar76/Web-Scan-X";
+const BLOB = REPO + "/blob/main/";
+const LINKS: Record<string, string> = {
+  "Get started": "#download", Docs: "#faq", "Sample report": "#sample-report", "Dashboard demo": "#/dashboard/new-scan",
+  GitHub: REPO, Security: BLOB + "SECURITY.md", License: BLOB + "LICENSE",
+  Terms: BLOB + "docs/policy/TERMS.md", "Acceptable Use": BLOB + "docs/policy/ACCEPTABLE-USE.md",
+  "Responsible Disclosure": BLOB + "docs/policy/DISCLOSURE.md", Privacy: BLOB + "PRIVACY.md",
+};
 
 function Footer() {
   return (
@@ -534,15 +552,13 @@ function Footer() {
         </div>
         {[
           { label: "PRODUCT", links: ["Get started", "Docs", "Sample report", "Dashboard demo"] },
-          { label: "PROJECT", links: ["GitHub", "Security policy", "License"] },
-          { label: "LEGAL", links: ["Responsible use", "Privacy"] },
+          { label: "PROJECT", links: ["GitHub", "Security", "License"] },
+          { label: "LEGAL", links: ["Terms", "Acceptable Use", "Responsible Disclosure", "Privacy"] },
         ].map((col) => (
           <div key={col.label} className="w-[180px] space-y-2">
             <p className="mono text-[11px] font-medium text-[#605d5d]">{col.label}</p>
             {col.links.map((l) => (
-              soon.includes(l)
-                ? <p key={l} title="Coming soon" aria-label={`${l} (coming soon)`} className="text-sm text-[#605d5d] cursor-default">{l}</p>
-                : <p key={l} className="text-sm text-[#9a9695] hover:text-[#f2f0ef] cursor-pointer transition-colors">{l}</p>
+              <a key={l} href={LINKS[l]} {...(LINKS[l].startsWith("http") ? { target: "_blank", rel: "noreferrer" } : {})} className="block text-sm text-[#9a9695] hover:text-[#f2f0ef] transition-colors">{l}</a>
             ))}
           </div>
         ))}

@@ -215,7 +215,7 @@ def test_local_api():
     def post(body, origin=None):
         req = urllib.request.Request(
             base + "/api/scan", data=_json.dumps(body).encode(),
-            headers={"Content-Type": "application/json"}, method="POST")
+            headers={"Content-Type": "application/json", "X-WebScanX-Token": api.TOKEN}, method="POST")
         if origin:
             req.add_header("Origin", origin)
         try:
@@ -225,7 +225,7 @@ def test_local_api():
             return e.code, _json.loads(e.read())
 
     def get(path, origin=None):
-        req = urllib.request.Request(base + path)
+        req = urllib.request.Request(base + path, headers={"X-WebScanX-Token": api.TOKEN})
         if origin:
             req.add_header("Origin", origin)
         try:

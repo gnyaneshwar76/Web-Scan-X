@@ -51,6 +51,7 @@ def _post(port, body=None, content_length=None):
     c = http.client.HTTPConnection("127.0.0.1", port, timeout=10)
     c.putrequest("POST", "/api/scan")
     c.putheader("Content-Type", "application/json")
+    c.putheader("X-WebScanX-Token", api.TOKEN)
     c.putheader("Content-Length", str(len(data)) if content_length is None else content_length)
     c.endheaders(data)
     try:

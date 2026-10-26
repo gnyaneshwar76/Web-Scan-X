@@ -20,8 +20,12 @@ in the POST body.
 
 from __future__ import annotations
 
+import hmac
 import json
 import mimetypes
+import os
+import re
+import secrets
 import shlex
 import threading
 import uuid
@@ -48,6 +52,15 @@ ALLOWED_ORIGIN_HOSTS = {"127.0.0.1", "localhost", "::1"}
 MAX_RUNNING = 2      # concurrent scans; more get a 429
 MAX_FINISHED = 20    # finished scans kept in memory (never written to disk)
 DIST = Path(__file__).resolve().parent.parent / "site" / "dist"
+
+# Per-process API token: every /api/* call except GET /api/health must send it.
+TOKEN = os.environ.get("WEBSCANX_TOKEN") or secrets.token_urlsafe(24)
+
+CSP = ("default-src 'self'; img-src 'self' data:; style-src 'self' 'unsafe-inline'; "
+       "connect-src 'self' http://127.0.0.1:8765 http://localhost:8765; "
+       "frame-ancestors 'none'; base-uri 'none'; form-action 'self'")
+SEC_HEADERS = {"Content-Security-Policy": CSP, "X-Content-Type-Options": "nosniff",
+               "Referrer-Policy": "no-referrer", "X-Frame-Options": "DENY"}
 
 _JOBS: dict[str, dict] = {}
 _ORDER: list[str] = []
@@ -257,7 +270,7 @@ class Handler(BaseHTTPRequestHandler):
     protocol_version = "HTTP/1.1"
 
     def log_message(self, fmt: str, *args) -> None:
-        print(f"  {self.address_string()} {fmt % args}")
+        print(f"  {self.address_string()} {(fmt % args).replace(TOKEN, '***')}")
 
     # -- helpers
 
@@ -276,6 +289,12 @@ class Handler(BaseHTTPRequestHandler):
         except ValueError:  # malformed port etc.
             return False
 
+    def _authed(self, query: str = "", allow_query: bool = False) -> bool:
+        got = self.headers.get("X-WebScanX-Token") or ""
+        if not got and allow_query:
+            got = (parse_qs(query).get("token") or [""])[0]
+        return hmac.compare_digest(got.encode(), TOKEN.encode())
+
     def _static(self, path: str) -> None:
         rel = path.lstrip("/") or "index.html"
         f = (DIST / rel).resolve()
@@ -289,11 +308,16 @@ class Handler(BaseHTTPRequestHandler):
         ctype = mimetypes.guess_type(f.name)[0] or "application/octet-stream"
         if ctype.startswith("text/") or ctype.endswith("javascript"):
             ctype += "; charset=utf-8"
-        self._send(200, f.read_bytes(), ctype)
+        blob = f.read_bytes()
+        if f.name == "index.html":
+            meta = f'<meta name="webscanx-token" content="{TOKEN}">'.encode()
+            blob = re.sub(rb"<head[^>]*>", lambda m: m.group(0) + meta, blob, count=1, flags=re.I)
+        self._send(200, blob, ctype)
 
     def _cors(self) -> None:
         origin = self.headers.get("Origin")
-        if origin and self._origin_ok():
+        # API only: never let another local page read the served HTML (it carries the token)
+        if origin and self._origin_ok() and self.path.startswith("/api/"):
             self.send_header("Access-Control-Allow-Origin", origin)
             self.send_header("Vary", "Origin")
 
@@ -302,8 +326,10 @@ class Handler(BaseHTTPRequestHandler):
         self.send_response(code)
         self.send_header("Content-Type", ctype)
         self.send_header("Content-Length", str(len(blob)))
+        for k, v in SEC_HEADERS.items():
+            self.send_header(k, v)
         self._cors()
-        if code in (403, 411, 413) or self.close_connection:  # request body not read
+        if code in (401, 403, 411, 413) or self.close_connection:  # request body not read
             self.send_header("Connection", "close")
         for k, v in (extra or {}).items():
             self.send_header(k, v)
@@ -323,9 +349,11 @@ class Handler(BaseHTTPRequestHandler):
         if not self._origin_ok():
             return self._error(403, "cross-origin requests are not allowed")
         self.send_response(204)
+        for k, v in SEC_HEADERS.items():
+            self.send_header(k, v)
         self._cors()
         self.send_header("Access-Control-Allow-Methods", "GET, POST, OPTIONS")
-        self.send_header("Access-Control-Allow-Headers", "Content-Type")
+        self.send_header("Access-Control-Allow-Headers", "Content-Type, X-WebScanX-Token")
         self.send_header("Content-Length", "0")
         self.end_headers()
 
@@ -337,6 +365,10 @@ class Handler(BaseHTTPRequestHandler):
 
         if parts == ["api", "health"]:
             return self._json(200, {"ok": True, "version": __version__})
+
+        is_report = len(parts) == 4 and parts[:2] == ["api", "scan"] and parts[3] == "report"
+        if parts[:1] == ["api"] and not self._authed(url.query, is_report):
+            return self._error(401, "missing or wrong X-WebScanX-Token")
 
         if parts == ["api", "scans"]:
             with _LOCK:
@@ -388,6 +420,8 @@ class Handler(BaseHTTPRequestHandler):
             return self._error(403, "cross-origin requests are not allowed")
         if urlparse(self.path).path.rstrip("/") != "/api/scan":
             return self._error(404, "not found")
+        if not self._authed():
+            return self._error(401, "missing or wrong X-WebScanX-Token")
 
         cl = self.headers.get("Content-Length")
         if cl is None:
@@ -431,6 +465,7 @@ def serve(host: str = HOST, port: int = PORT) -> None:
               f"is probably running. Stop it, or pass --port.")
         raise SystemExit(3)
     print(f"WebScanX {__version__} - local API on http://{host}:{port}")
+    print(f"  API token: {TOKEN}  (header X-WebScanX-Token; the served UI gets it automatically)")
     print("  POST /api/scan   GET /api/scan/<id>   GET /api/scans")
     print(f"  UI: {'http://%s:%d/' % (host, port) if DIST.is_dir() else 'not built (site/dist missing)'}")
     print("  Ctrl-C to stop.  Scan data stays on this machine; the scanner "

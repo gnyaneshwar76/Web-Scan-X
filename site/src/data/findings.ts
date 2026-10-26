@@ -28,7 +28,7 @@ export type Finding = {
 };
 
 // Real findings from WebScanX 0.1.0.dev0 scan of http://127.0.0.1:63725/
-// Source: src/imports/sample_report.md
+// Source: bundled sample report
 export const FINDINGS: Finding[] = [
   {
     id: 1,

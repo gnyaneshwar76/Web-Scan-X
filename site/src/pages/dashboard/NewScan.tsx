@@ -215,7 +215,7 @@ export default function NewScan() {
               <div>
                 <span className="block text-[13px] font-semibold text-[#f0eeed] leading-snug">
                   I own this target or have written permission to test it, and I accept responsibility.{" "}
-                  <a href="/acceptable-use" onClick={(e) => e.stopPropagation()} className="underline text-[#7fe0b8]">Acceptable Use</a>
+                  <a href="https://github.com/gnyaneshwar76/Web-Scan-X/blob/main/docs/policy/ACCEPTABLE-USE.md" target="_blank" rel="noreferrer" onClick={(e) => e.stopPropagation()} className="underline text-[#7fe0b8]">Acceptable Use</a>
                 </span>
                 <span className="block text-[11px] text-[#535050] mt-1.5 leading-relaxed">
                   I own this target or have written permission to test it, and I will stay within the scope I am authorized for. I will not scan third-party systems. I understand aggressive mode can send requests that change or delete data. I accept full responsibility for this scan.

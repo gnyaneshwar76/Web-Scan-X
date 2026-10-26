@@ -15,3 +15,8 @@
 13. Results: severity filter/badge counts now exclude ignored findings. Ignore set is in memory and resets on reload.
 14. NewScan authorization checkbox: label now "I own this target or have written permission to test it, and I accept responsibility." + "Acceptable Use" link (/acceptable-use, page not yet built) + long consent note below (wording pending lawyer review).
 15. Shop: Python requirement 3.9+ -> 3.10+ (hero chip and FAQ). Footer Security policy / License / Responsible use / Privacy are dimmed, non-hover, title "Coming soon".
+16. Shop footer: every link is real. PRODUCT: Get started, Docs, Sample report, Dashboard demo (in-page). PROJECT: GitHub, Security, License. LEGAL: Terms, Acceptable Use, Responsible Disclosure, Privacy (all open the GitHub repo files in a new tab). The "coming soon" dimmed style is gone; nav GitHub link points to the repo.
+17. NewScan authorization sentence: the "Acceptable Use" link now opens the GitHub copy of docs/policy/ACCEPTABLE-USE.md.
+18. Shop "Run WebScanX locally": adds "Get it from github.com/gnyaneshwar76/Web-Scan-X (clone or download ZIP), then in that folder:" and two command chips, `pip install .` then `python -m webscanx.server`, then "Then open http://127.0.0.1:8765". No installers, checksums or PyPI claim.
+19. Removed site/src/imports (reference-only Figma/brief leftovers); items 9-10 mention of those files is obsolete.
+20. API calls send an X-WebScanX-Token header (from the page's webscanx-token meta tag or VITE_WEBSCANX_TOKEN); report links carry token=. No visual change.

@@ -66,10 +66,18 @@ export class OfflineError extends Error {
   }
 }
 
+// The engine injects a per-run token into the page it serves; dev builds use VITE_WEBSCANX_TOKEN.
+const TOKEN: string =
+  document.querySelector<HTMLMetaElement>('meta[name="webscanx-token"]')?.content ||
+  env.VITE_WEBSCANX_TOKEN ||
+  "";
+
 async function call<T>(path: string, init?: RequestInit): Promise<T> {
   let res: Response;
   try {
-    res = await fetch(API_BASE + path, init);
+    const headers = new Headers(init?.headers);
+    headers.set("X-WebScanX-Token", TOKEN);
+    res = await fetch(API_BASE + path, { ...init, headers });
   } catch {
     throw new OfflineError();
   }
@@ -117,7 +125,7 @@ export const ignoreFinding = (fp: string) => void ignored.add(fp);
 export const isIgnored = (fp?: string) => !!fp && ignored.has(fp);
 
 export function reportUrl(id: string, format: string, o: ReportOpts = {}): string {
-  const q = new URLSearchParams({ format });
+  const q = new URLSearchParams({ format, token: TOKEN });
   if (o.evidence === false) q.set("evidence", "0");
   if (o.redact) q.set("redact", "1");
   if (!o.includeIgnored && ignored.size) q.set("ignored", [...ignored].join(","));

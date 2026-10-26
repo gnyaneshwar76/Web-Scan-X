@@ -22,17 +22,19 @@ def _start():
     return httpd
 
 
-def _req(httpd, method, path, body=None, host=None):
+def _req(httpd, method, path, body=None, host=None, token=None, headers=False):
     c = http.client.HTTPConnection("127.0.0.1", httpd.server_address[1], timeout=10)
     c.putrequest(method, path, skip_host=True)   # raw path: no client-side normalising
     c.putheader("Host", host or "127.0.0.1:%d" % httpd.server_address[1])
+    if token is not False:
+        c.putheader("X-WebScanX-Token", api.TOKEN if token is None else token)
     data = json.dumps(body).encode() if body is not None else None
     if data:
         c.putheader("Content-Type", "application/json")
         c.putheader("Content-Length", str(len(data)))
     c.endheaders(data)
     r = c.getresponse()
-    out = r.status, r.read()
+    out = (r.status, r.read()) + ((dict(r.getheaders()),) if headers else ())
     c.close()
     return out
 
@@ -138,6 +140,31 @@ def test_static_traversal_404():
                 code, blob = _req(h, "GET", p)
                 assert b"TOPSECRET" not in blob, p
                 assert code == 404, (p, code)
+    finally:
+        api.DIST = old
+        h.shutdown(); h.server_close()
+
+
+def test_token_and_security_headers():
+    h = _start()
+    old = api.DIST
+    try:
+        with tempfile.TemporaryDirectory() as t:
+            dist = Path(t, "dist").resolve()
+            dist.mkdir()
+            (dist / "index.html").write_text("<html><head><title>x</title></head></html>")
+            api.DIST = dist
+            assert _req(h, "GET", "/api/scans", token=False)[0] == 401
+            assert _req(h, "GET", "/api/scans", token="wrong")[0] == 401
+            assert _req(h, "POST", "/api/scan", {}, token=False)[0] == 401
+            assert _req(h, "GET", "/api/scans")[0] == 200
+            assert _req(h, "GET", "/api/health", token=False)[0] == 200
+            assert _req(h, "GET", "/api/scan/x/report", token=False)[0] == 401
+            assert _req(h, "GET", "/api/scan/x/report?token=" + api.TOKEN, token=False)[0] == 404
+            code, blob, hdrs = _req(h, "GET", "/", token=False, headers=True)
+            assert code == 200 and ('name="webscanx-token" content="%s"' % api.TOKEN).encode() in blob
+            for k, v in api.SEC_HEADERS.items():
+                assert hdrs.get(k) == v, k
     finally:
         api.DIST = old
         h.shutdown(); h.server_close()

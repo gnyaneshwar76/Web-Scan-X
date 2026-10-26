@@ -4,9 +4,9 @@ RULE: after every response, the General Manager adds a dated entry below and upd
 
 ## STATE (update every time)
 - **Updated:** 26 Oct 2026. Nothing committed yet; plan agreed (web launch first, then PHP/JS rules, AI helper A, Android).
-- **Repo:** E:WebScanX, github.com/gnyaneshwar76/Web-Scan-X. Work committed locally on branch agent-fixes-oct (56af56e), NOT pushed; main unchanged at 9196a1d.
+- **Repo:** E:WebScanX, github.com/gnyaneshwar76/Web-Scan-X. All work merged into main and pushed (26 Oct).
 - **Engine:** Python, stdlib only, 15 web + 4 code scanners. Tests: `python tests/test_spine.py` plus tests/test_fixture2.py, test_server_limits.py, test_report_options.py. All passed at the Manager's check.
-- **Site:** site/ (React + Vite). Build not yet verified (node_modules incomplete; needs the owner's OK for `npm ci`).
+- **Site:** site/ builds (pnpm 9.15.9, deps installed 26 Oct). Build step needed before the server can serve the UI.
 - **Team:** 13 agents in `.claude/agents/` (manager, api, detect, report, ui, pack, test, reviewer, verify, security, laws, policy, privacy), ownership in `.claude/team/OWNERS.md`, handoff in `.claude/team/HANDOFF.md`.
 - **Sections (chats):** "Webscanx" = this chat, where the owner talks. "WebScanX agent team" = the new section that runs the agents. Messages go between them with SendMessage; the owner mostly talks here only.
 - **Waiting for the owner:** the word "draft" (security, laws, policy, privacy write their documents) and/or "fix" (owners fix the launch blockers), plus the decisions listed under OPEN DECISIONS.
@@ -60,6 +60,8 @@ Licence (MIT/Apache/AGPL); operator name, jurisdiction, contact email; hosted do
 - **26 Oct (3):** fix round finished (manager report relayed). I re-ran the tests myself: 41 run, OK. Stash list empty. Still uncommitted (47 changed/new files). Open: install path, LICENSE, documents, API token, CSP, real font files, UI build (needs pnpm install yes), site/src/imports delete (needs yes), SHA-pinned CI, Figma redo, lawyer check.
 
 - **26 Oct (4):** owner said "go on"; committed all work on a new branch agent-fixes-oct (56af56e, 62 files), using the repo's existing author identity for this commit only (git identity is not set on this laptop). Added .claude/data/ (plugin database) to .gitignore. Not pushed, not merged into main.
+
+- **26 Oct (5):** owner said "do all". Agent team section was closed, so agents ran from this chat. Done: pushed branch; pnpm install + build OK; api token (X-WebScanX-Token, meta tag in served page, ?token= for report downloads) + CSP/nosniff/no-referrer/DENY headers; site/src/imports deleted; real footer/policy links; Shop + README install steps (incl. building the dashboard); MIT LICENSE; CI pinned to SHAs; DRAFT TERMS/ACCEPTABLE-USE/DISCLOSURE/PRIVACY/SECURITY (placeholders: contact email, jurisdiction, response time); unused Google Analytics hook removed. Reviewer found 2 bugs, fixed by me: served HTML no longer gets CORS (other localhost pages could read the token), token masked in console log; doc contradictions fixed (aggressive mode can change data). Verified: 42 tests OK, site build OK, wheel builds, live checks (401 without token, 200 with, 403 bad host, no CORS on HTML, CSP present). Committed, merged into main, pushed.
 
 ## NEXT STEPS
 1. Owner says "draft" and/or "fix" (and answers the open decisions).

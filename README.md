@@ -3,7 +3,7 @@
 A local web vulnerability scanner. You download it, point it at a site you are
 authorized to test, and it finds web vulnerabilities, explains each one in plain
 language (what it is, how to check it, how to fix it) and exports one report.
-v1 **finds and explains only** — it never changes your site. Everything runs on
+v1 **finds and explains only** — in its default safe mode it only reads and never changes your site. Everything runs on
 your machine. Scan data stays on this machine; the scanner contacts only the
 target you authorise.
 
@@ -17,6 +17,14 @@ target you authorise.
 | `design-preview/` | Offline HTML preview of the older Stitch screens. Reference only. |
 | `DESIGN-BRIEF.md`, `STITCH-MASTER-PROMPT.md` | Design decisions and the screen-by-screen brief. |
 | `sample_report.md`, `sample_report.html` | A real report produced by the engine. |
+
+## Install
+
+1. Get the code from https://github.com/gnyaneshwar76/Web-Scan-X: `git clone https://github.com/gnyaneshwar76/Web-Scan-X.git`, or download the ZIP and unpack it.
+2. You need Python 3.10+. From the project folder run `pip install .`
+3. Build the dashboard once (needs Node.js): `cd site && npx pnpm@9 install && npx pnpm@9 run build && cd ..`
+4. Start it: `python -m webscanx.server`, then open http://127.0.0.1:8765. The server prints an access token and serves the UI; the page picks the token up automatically.
+4. Or skip the UI and use the `webscanx` command (see below).
 
 ## Running the scanner
 
@@ -39,8 +47,8 @@ Before every scan you must confirm (wording pending lawyer review):
 > I own this target or have written permission to test it, and I will stay within
 > the scope I am authorized for. I will not scan third-party systems. I understand
 > aggressive mode can send requests that change or delete data. I accept full
-> responsibility for this scan. Acceptable Use: docs/policy/ACCEPTABLE-USE.md
-> (not written yet)
+> responsibility for this scan. Acceptable Use:
+> [docs/policy/ACCEPTABLE-USE.md](docs/policy/ACCEPTABLE-USE.md)
 
 ## Running the design
 
@@ -64,7 +72,15 @@ The Shop is at `/`, the dashboard at `#/dashboard/new-scan`.
 - The Shop's sample report and the dashboard's Results screen are the same
   component with the same data — what a visitor is shown is what the tool gives.
 
+## Legal
+
+- [LICENSE](LICENSE) (MIT)
+- [PRIVACY.md](PRIVACY.md)
+- [SECURITY.md](SECURITY.md)
+- [Terms](docs/policy/TERMS.md)
+- [Acceptable Use](docs/policy/ACCEPTABLE-USE.md)
+- [Disclosure](docs/policy/DISCLOSURE.md)
+
 ## Status
 
-The engine is in development. The download buttons on the Shop are placeholders
-until there is a release to download.
+Pre-release. There are no installers yet: run it from source as described under Install.

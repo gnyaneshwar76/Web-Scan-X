@@ -28,6 +28,12 @@ def register(kind: TargetKind, name: str) -> Callable[[Scanner], Scanner]:
     return deco
 
 
+def unknown_names(names) -> list[str]:
+    """Names that match no registered scanner (any target kind)."""
+    known = {n for lst in _REGISTRY.values() for n, _ in lst}
+    return sorted(set(names) - known)
+
+
 def scanners_for(kind: TargetKind) -> list[tuple[str, Scanner]]:
     return list(_REGISTRY.get(kind, []))
 

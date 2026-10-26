@@ -11,15 +11,51 @@ socket directly.
 
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from html.parser import HTMLParser
 from urllib.parse import urljoin, urlparse, urldefrag
 
 from . import http
 
-# ponytail: fixed ceilings; lift if a real target needs a wider crawl.
+# Defaults only: ctx.max_pages / ctx.max_depth (CLI --max-pages/--depth, API maxPages/depth) override.
 MAX_PAGES = 25
 MAX_DEPTH = 2
+MAX_SCRIPTS = 5          # same-origin <script src> files read per page for route strings
+
+_SKIP_EXT = (".js", ".css", ".png", ".jpg", ".jpeg", ".gif", ".svg", ".ico", ".woff",
+             ".woff2", ".ttf", ".map", ".mp4", ".webp", ".pdf", ".zip")
+# quoted absolute-path strings in JS, e.g. "/api/users?id=1"
+_JS_ROUTE = re.compile(r"""["'`](/[A-Za-z0-9_\-./]{1,100}(?:\?[A-Za-z0-9_=&%.\-]{1,100})?)["'`]""")
+
+
+def _js_routes(js: str) -> list[str]:
+    out = []
+    for r in _JS_ROUTE.findall(js or ""):
+        if not r.startswith("//") and not r.split("?")[0].lower().endswith(_SKIP_EXT):
+            out.append(r)
+    return out
+
+
+def _seed_urls(root: str, timeout: float) -> list[str]:
+    """Extra start URLs from robots.txt (Allow/Disallow paths, Sitemap:) and sitemap.xml."""
+    base = f"{urlparse(root).scheme}://{urlparse(root).netloc}"
+    urls: list[str] = []
+    sitemaps = [base + "/sitemap.xml"]
+    r = http.fetch(base + "/robots.txt", timeout=timeout)
+    if r.ok and r.status == 200:
+        for line in r.body.splitlines():
+            key, _, val = line.partition(":")
+            key, val = key.strip().lower(), val.strip()
+            if key == "sitemap" and val:
+                sitemaps.append(val)
+            elif key in ("allow", "disallow") and val.startswith("/") and not any(c in val for c in "*$"):
+                urls.append(base + val)
+    for sm in dict.fromkeys(sitemaps):
+        r = http.fetch(sm, timeout=timeout)
+        if r.ok and r.status == 200:
+            urls += [u.strip() for u in re.findall(r"<loc>\s*([^<\s]+)\s*</loc>", r.body)]
+    return [u for u in dict.fromkeys(urls) if _same_origin(u, root)]
 
 
 @dataclass
@@ -72,6 +108,7 @@ class _Parser(HTMLParser):
         super().__init__(convert_charrefs=True)
         self.base = base_url
         self.links: list[str] = []
+        self.scripts: list[str] = []
         self.forms: list[Form] = []
         self._form: Form | None = None
 
@@ -80,6 +117,8 @@ class _Parser(HTMLParser):
         if tag == "a" and a.get("href"):
             href, _ = urldefrag(urljoin(self.base, a["href"]))
             self.links.append(href)
+        elif tag == "script" and a.get("src"):
+            self.scripts.append(urljoin(self.base, a["src"]))
         elif tag == "form":
             action = urljoin(self.base, a.get("action") or self.base)
             self._form = Form(action_url=action,
@@ -110,6 +149,7 @@ def crawl(root: str, timeout: float = 15.0,
     """Breadth-first, same-origin, capped. Never raises — bad pages are skipped."""
     site = Sitemap(root=root)
     queue: list[tuple[str, int]] = [(root, 0)]
+    queue += [(u, 1) for u in _seed_urls(root, timeout)]
     visited: set[str] = set()
 
     while queue and len(site.pages) < max_pages:
@@ -135,7 +175,12 @@ def crawl(root: str, timeout: float = 15.0,
             continue
         site.forms.extend(p.forms)
         if depth < max_depth:
-            for link in p.links:
+            links = list(p.links)
+            for src in [u for u in p.scripts if _same_origin(u, root)][:MAX_SCRIPTS]:
+                js = http.fetch(src, timeout=timeout)
+                if js.ok:
+                    links += [urldefrag(urljoin(root, r))[0] for r in _js_routes(js.body)]
+            for link in links:
                 if link not in visited and _same_origin(link, root):
                     queue.append((link, depth + 1))
 
@@ -177,6 +222,11 @@ def demo() -> None:
     assert comment.has_token, "csrf_token field must be detected"
     assert _same_origin("http://site.test/a", "http://site.test/b")
     assert not _same_origin("http://site.test/a", "https://site.test/a")  # scheme differs
+
+    assert _js_routes('fetch("/api/u?id=1"); x="//cdn/x"; y="/a.png"; z="/login"') == ["/api/u?id=1", "/login"]
+    p2 = _Parser("http://site.test/")
+    p2.feed('<script src="/app.js"></script>')
+    assert p2.scripts == ["http://site.test/app.js"]
 
     # Sitemap.params extracts query parameters from crawled page URLs.
     sm = Sitemap(root="http://site.test/")

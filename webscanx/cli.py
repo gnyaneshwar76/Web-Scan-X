@@ -34,9 +34,12 @@ def _confirm_permission(target: Target, assume_yes: bool) -> bool:
         return True
     prompt = (
         f"\n  WebScanX will actively scan: {target.location}\n"
-        f"  Only scan systems you own or have written permission to test.\n"
-        f"  Unauthorised scanning is illegal in most jurisdictions.\n"
-        f"  Proceed? [y/N] "
+        "  I own this target or have written permission to test it, and I will stay\n"
+        "  within the scope I am authorized for. I will not scan third-party systems.\n"
+        "  I understand aggressive mode can send requests that change or delete data.\n"
+        "  I accept full responsibility for this scan.\n"
+        "  Acceptable Use: docs/policy/ACCEPTABLE-USE.md\n"
+        "  Proceed? [y/N] "
     )
     try:
         return input(prompt).strip().lower() in ("y", "yes")
@@ -70,6 +73,12 @@ def build_parser() -> argparse.ArgumentParser:
                    help="max pages to crawl for web targets (default: 25)")
     p.add_argument("--depth", type=int, default=None,
                    help="max crawl depth for web targets (default: 2)")
+    p.add_argument("--no-evidence", action="store_true",
+                   help="leave the evidence field out of reports")
+    p.add_argument("--ignore", action="append", default=[], metavar="FINGERPRINT",
+                   help="omit this finding from reports (repeatable)")
+    p.add_argument("--redact", action="store_true",
+                   help="mask secrets and query values in reports")
     p.add_argument("-y", "--yes", action="store_true",
                    help="skip the permission prompt (you assert authorisation)")
     p.add_argument("--list-formats", action="store_true",
@@ -110,6 +119,13 @@ def main(argv: list[str] | None = None) -> int:
               f"or binary).", file=sys.stderr)
         return EXIT_ERROR
 
+    bad = engine.unknown_names(args.only)
+    if bad:
+        print(f"error: unknown scanner(s): {', '.join(bad)}. Known: "
+              f"{', '.join(n for k in TargetKind for n, _ in engine.scanners_for(k))}",
+              file=sys.stderr)
+        return 3
+
     if not _confirm_permission(target, args.yes):
         print("aborted: no authorisation confirmed.", file=sys.stderr)
         return EXIT_ERROR
@@ -119,17 +135,26 @@ def main(argv: list[str] | None = None) -> int:
                              max_pages=args.max_pages, max_depth=args.depth)
     from .scanners.web import http as web_http  # apply the politeness throttle
     web_http.set_rate(args.delay)
+    if target.kind is TargetKind.WEB:
+        try:
+            web_http.set_scope(target.location)  # SSRF guard
+        except ValueError as e:
+            print(f"error: {e}", file=sys.stderr)
+            return EXIT_ERROR
     report = Report(target=target.location, target_kind=target.kind.value,
                     tool_version=__version__)
-    report.scanners_run = [name for name, _ in engine.scanners_for(target.kind)]
+    report.scanners_run = [name for name, _ in engine.scanners_for(target.kind)
+                           if not ctx.only or name in ctx.only]
     report.findings = engine.run(target, ctx)
     report.finished = datetime.now(timezone.utc)
 
+    opts = render_mod.Options(evidence=not args.no_evidence,
+                              ignored=frozenset(args.ignore), redact=args.redact)
     formats = args.format or ["md"]
     written = []
     for fmt in formats:
         try:
-            blob = render_mod.render(report, fmt)
+            blob = render_mod.render(report, fmt, opts)
         except KeyError as e:
             print(f"error: {e}", file=sys.stderr)
             return EXIT_ERROR

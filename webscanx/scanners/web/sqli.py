@@ -3,11 +3,15 @@
 The loop: send a syntax-breaking probe (a single quote), read the response,
 decide on a database error signature leaking back. A leaked SQL error proves the
 input reached the query builder unsanitised. This is the shallow, high-confidence
-class only — blind/boolean/time-based SQLi is out of scope this phase.
+class only — time-based SQLi is out of scope.
 
 Safe by default: a lone quote is read-only. GET params/forms always probed;
 POST forms only under --aggressive. To cut false positives, the probe is only
 flagged when the quote version errors AND a benign control value does not.
+
+Boolean-based (read-only, so also on by default): for a parameter, the body must
+be stable across two plain requests, an always-true condition must match it, and
+an always-false condition must differ. Both numeric and quoted-string forms.
 """
 
 from __future__ import annotations
@@ -60,6 +64,42 @@ def _finding(where: str, signature: str) -> Finding:
     )
 
 
+_BOOL_SUFFIXES = (("numeric", " AND 1=1", " AND 1=2"),
+                  ("string", "' AND '1'='1", "' AND '1'='2"))
+
+
+def _boolean_differs(base: str, base2: str, true: str, false: str) -> bool:
+    """Stable baseline, true-condition equals it, false-condition differs."""
+    return base == base2 and true == base and false != base
+
+
+def _boolean_finding(where: str, kind: str) -> Finding:
+    f = _finding(where, "")
+    f.title = "SQL injection (boolean-based)"
+    f.evidence = (f"Always-true ({kind}) condition returned the normal page; "
+                  "always-false condition changed it")
+    f.how_to_check = ("Compare the page for value, value+AND 1=1 and value+AND 1=2 "
+                      "(quote-wrapped for text fields). 1=1 matching the original "
+                      "while 1=2 differs confirms it.")
+    return f
+
+
+def _probe_boolean(url: str, name: str, timeout: float) -> Finding | None:
+    cur = dict(parse_qsl(urlparse(url).query)).get(name, "")
+    base = http.fetch(url, timeout=timeout)
+    if not (base.ok and base.status == 200):
+        return None
+    base2 = http.fetch(url, timeout=timeout)
+    if not base2.ok or base2.body != base.body:
+        return None                     # dynamic page: can't compare reliably
+    for kind, yes, no in _BOOL_SUFFIXES:
+        t = http.fetch(_set_param(url, name, cur + yes), timeout=timeout)
+        f = http.fetch(_set_param(url, name, cur + no), timeout=timeout)
+        if t.ok and f.ok and _boolean_differs(base.body, base2.body, t.body, f.body):
+            return _boolean_finding(f"{url} (param: {name})", kind)
+    return None
+
+
 def _set_param(url: str, name: str, value: str) -> str:
     parts = urlparse(url)
     q = [(k, value if k == name else v) for k, v in parse_qsl(parts.query)]
@@ -101,7 +141,8 @@ def scan(target, ctx):
     site = get_sitemap(target, ctx)
 
     for url, name in site.params:
-        f = _probe_url_param(url, name, ctx.timeout)
+        f = (_probe_url_param(url, name, ctx.timeout)
+             or _probe_boolean(url, name, ctx.timeout))
         if f:
             yield f
 
@@ -125,6 +166,11 @@ def demo() -> None:
     assert _set_param("http://x/?id=1&p=2", "id", "'") == "http://x/?id=%27&p=2"
     f = _finding("http://x/?id=", "MySQL")
     assert f.severity.label == "High" and "parameterised" in f.remediation
+    assert _boolean_differs("a", "a", "a", "b")
+    assert not _boolean_differs("a", "b", "a", "c"), "unstable page must not flag"
+    assert not _boolean_differs("a", "a", "a", "a"), "no change on false must not flag"
+    assert not _boolean_differs("a", "a", "b", "c"), "true must match baseline"
+    assert _boolean_finding("http://x/?id=1", "numeric").title.endswith("(boolean-based)")
     print("sqli.py: ok")
 
 

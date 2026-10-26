@@ -1,0 +1,20 @@
+[build-system]
+requires = ["setuptools>=61"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "webscanx"
+dynamic = ["version"]
+description = "Local web vulnerability scanner: finds and explains issues, never changes your site."
+readme = "README.md"
+requires-python = ">=3.10"
+dependencies = []  # stdlib only
+
+[project.scripts]
+webscanx = "webscanx.cli:main"
+
+[tool.setuptools.dynamic]
+version = { attr = "webscanx.__version__" }
+
+[tool.setuptools.packages.find]
+include = ["webscanx*"]

@@ -28,6 +28,13 @@ def _attrs(raw: str) -> dict:
     return name, flags
 
 
+def _mask(raw: str) -> str:
+    """Set-Cookie line with the value hidden so session tokens never reach evidence."""
+    first, sep, rest = raw.partition(";")
+    name = first.split("=", 1)[0].strip()
+    return f"Set-Cookie: {name}=<value hidden>{sep}{rest}"
+
+
 def _issues(name: str, flags: dict) -> list[str]:
     out = []
     has_secure = "secure" in flags
@@ -57,7 +64,7 @@ def scan(target, ctx):
                 severity="medium", where=page.url, scanner="web.cookies",
                 what=f"The cookie '{name}' has a policy problem: {issue}.",
                 how_to_check="Inspect the Set-Cookie response header for this cookie.",
-                evidence=f"Set-Cookie: {raw}",
+                evidence=_mask(raw),
                 remediation="Set Secure whenever SameSite=None, and follow the "
                             "__Host-/__Secure- prefix rules (Secure, Path=/, no Domain).",
                 category=_CAT, references=_REFS,
@@ -67,6 +74,17 @@ def scan(target, ctx):
 def demo() -> None:
     n, f = _attrs("sid=abc; SameSite=None; Path=/")
     assert n == "sid" and _issues(n, f)              # None without Secure -> flagged
+    m = _mask("sid=SECRET123; SameSite=None; Path=/")
+    assert "SECRET123" not in m and "sid=<value hidden>" in m and "SameSite=None" in m
+    from types import SimpleNamespace
+    from .crawler import Sitemap, Page
+    ctx = SimpleNamespace(cache={}, timeout=5.0, aggressive=False, only=set())
+    page = Page(url="http://x.test/", status=200, headers={},
+                set_cookie=["sess=1; SameSite=None; Path=/"])
+    ctx.cache["sitemap"] = Sitemap(root="http://x.test/", pages=[page])
+    found = list(scan(SimpleNamespace(location="http://x.test/", kind=TargetKind.WEB), ctx))
+    assert found and found[0].evidence == \
+        "Set-Cookie: sess=<value hidden>; SameSite=None; Path=/", found
     n, f = _attrs("__Host-sess=1; Secure; Path=/")
     assert _issues(n, f) == []                        # correct __Host- cookie
     n, f = _attrs("__Host-sess=1; Secure; Path=/; Domain=x.com")

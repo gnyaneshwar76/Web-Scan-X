@@ -1,3 +1,3 @@
-from .report import Report
+from .report import Options, Report
 
-__all__ = ["Report"]
+__all__ = ["Options", "Report"]

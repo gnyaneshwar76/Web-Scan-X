@@ -131,6 +131,8 @@ def test_web_scan_finds_vulns():
     try:
         port = srv.server_address[1]
         target = Target(TargetKind.WEB, f"http://127.0.0.1:{port}/", "fixture")
+        from webscanx.scanners.web import http as web_http
+        web_http.set_scope(target.location)
         found = run(target, ScanContext(aggressive=True))  # aggressive: probe POST form too
         by_scanner = {f.scanner for f in found}
         assert "web.headers" in by_scanner, "missing security-header findings"
@@ -282,6 +284,11 @@ def test_local_api():
         api._JOBS.clear()
         api._ORDER.clear()
     print("server.py: ok")
+
+
+def load_tests(loader, standard_tests, pattern):   # lets unittest/discover run the bare test_* functions
+    from tests._fn import collect
+    return collect(sys.modules[__name__])
 
 
 if __name__ == "__main__":

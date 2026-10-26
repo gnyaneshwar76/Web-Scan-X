@@ -33,7 +33,7 @@ _PATTERNS = {
 
 
 def _redact(s: str) -> str:
-    return s[:6] + "…" + s[-4:] if len(s) > 12 else s[:4] + "…"
+    return f"{s[:3]}**** ({len(s)} chars)"
 
 
 @register(TargetKind.WEB, "web.secrets")
@@ -67,7 +67,8 @@ def demo() -> None:
     assert _PATTERNS["AWS access key ID"].search(body)
     assert _PATTERNS["Google API key"].search(body)
     assert not _PATTERNS["AWS access key ID"].search("no secrets here")
-    assert _redact("AKIAIOSFODNN7EXAMPLE").startswith("AKIAIO") and "…" in _redact("A" * 20)
+    r = _redact("AKIAIOSFODNN7EXAMPLE")
+    assert r == "AKI**** (20 chars)" and "EXAMPLE" not in r
     print("secrets.py: ok")
 
 

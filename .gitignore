@@ -22,3 +22,7 @@ cli_check.*
 
 # Local-only backup (Claude memory incl. other projects, design zips)
 _backup/
+
+# Arena scratch
+.arena/
+.claude/data/

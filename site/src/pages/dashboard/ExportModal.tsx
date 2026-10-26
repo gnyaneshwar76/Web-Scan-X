@@ -15,19 +15,23 @@ const FORMATS: { key: Format; desc: string; ext: string; fmt: string }[] = [
 const TOGGLES = [
   { id: "evidence",  label: "Include evidence"         },
   { id: "ignored",   label: "Include ignored findings" },
-  { id: "redact",    label: "Redact target hostname"   },
+  { id: "redact",    label: "Redact secrets, cookies, tokens and target address" },
 ];
 
 export default function ExportModal({ onClose }: { onClose: () => void }) {
   const [format, setFormat] = useState<Format>("HTML");
-  const [opts, setOpts] = useState({ evidence: true, ignored: false, redact: false });
+  const [opts, setOpts] = useState({ evidence: true, ignored: false, redact: true });
   const [exporting, setExporting] = useState(false);
 
   const chosen = FORMATS.find((f) => f.key === format);
   const ext = chosen?.ext ?? "html";
   const job = currentScan();
   const href =
-    job && job.state === "done" ? reportUrl(job.id, chosen?.fmt ?? "html") : null;
+    job && job.state === "done" ? reportUrl(job.id, chosen?.fmt ?? "html", {
+      evidence: opts.evidence,
+      includeIgnored: opts.ignored,
+      redact: opts.redact,
+    }) : null;
 
   function handleExport() {
     setExporting(true);

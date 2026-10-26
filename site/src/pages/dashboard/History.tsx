@@ -33,18 +33,6 @@ function toRow(job: ScanJob): ScanRow {
   };
 }
 
-// Shown only when the engine isn't running (design preview).
-const ROWS: ScanRow[] = [
-  { id: "1", date: "2026-09-15", target: "http://127.0.0.1:63725/",        depth: "Standard", duration: "0m 0s",   high: 3, medium: 2, low: 3 },
-  { id: "2", date: "2026-09-14", target: "https://staging.example.com",    depth: "Standard", duration: "3m 42s",  high: 2, medium: 3, low: 5 },
-  { id: "3", date: "2026-09-12", target: "https://demo.webscanx.internal", depth: "Deep",     duration: "41m 08s", high: 1, medium: 4, low: 7 },
-  { id: "4", date: "2026-09-10", target: "https://dev.internal.corp",      depth: "Quick",    duration: "1m 55s",  high: 0, medium: 1, low: 2 },
-  { id: "5", date: "2026-09-07", target: "http://localhost:3000",           depth: "Standard", duration: "9m 14s",  high: 4, medium: 2, low: 1 },
-  { id: "6", date: "2026-09-03", target: "https://staging.example.com",    depth: "Standard", duration: "4m 01s",  high: 2, medium: 3, low: 6 },
-  { id: "7", date: "2026-08-28", target: "https://demo.webscanx.internal", depth: "Quick",    duration: "2m 12s",  high: 0, medium: 2, low: 3 },
-  { id: "8", date: "2026-08-20", target: "http://127.0.0.1:8080",          depth: "Deep",     duration: "47m 33s", high: 5, medium: 1, low: 4 },
-];
-
 function MiniBar({ high, medium, low }: { high: number; medium: number; low: number }) {
   const total = high + medium + low;
   if (total === 0) {
@@ -83,8 +71,8 @@ export default function History() {
     return () => window.removeEventListener("focus", load);
   }, []);
 
-  const rows = live?.length ? live.map(toRow) : ROWS;
-  const sample = !live?.length;
+  const rows = live ? live.map(toRow) : [];
+  const sample = false;
 
   const filtered = rows.filter((r) =>
     r.target.toLowerCase().includes(search.toLowerCase())
@@ -115,7 +103,7 @@ export default function History() {
           <div>
             <h1 className="text-[22px] font-semibold tracking-[-0.02em] text-[#f0eeed]">History</h1>
             <p className="mono text-[11px] text-[#3a3836] mt-1">
-              {sample ? "sample data" : "held by the running engine"}
+              held by the running engine
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2 w-full sm:w-auto">
@@ -146,7 +134,9 @@ export default function History() {
           </div>
 
           {filtered.length === 0 && (
-            <p className="px-5 py-6 mono text-[11px] text-[#2a2828]">No scans match.</p>
+            <p className="px-5 py-6 mono text-[11px] text-[#535050]">
+              {rows.length === 0 ? "No scans saved. Scan history is not stored on disk." : "No scans match."}
+            </p>
           )}
 
           {filtered.map((r) => (
@@ -186,9 +176,7 @@ export default function History() {
         </div>
 
         <p className="mono text-[10px] text-[#2a2828] mt-4">
-          {sample
-            ? `${ROWS.length} scans (sample data — start the engine to see your own)`
-            : `${rows.length} ${rows.length === 1 ? "scan" : "scans"} this engine session`}
+          {`${rows.length} ${rows.length === 1 ? "scan" : "scans"} this engine session`}
         </p>
       </div>
 

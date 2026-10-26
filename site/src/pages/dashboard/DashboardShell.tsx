@@ -137,7 +137,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <span className="mono text-[10px] text-[#535050]">Offline-safe</span>
           </div>
           <p className="mono text-[10px] text-[#3a3836] leading-relaxed">
-            No data leaves this device
+            Scan data stays on this machine; the scanner contacts only the target you authorise.
           </p>
           <button
             onClick={() => { window.location.hash = ""; }}

@@ -3,10 +3,42 @@ them. Every export format is built from this and nothing else."""
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field
+import re
+from dataclasses import dataclass, field, replace
 from datetime import datetime, timezone
 
 from ..core.finding import Finding, Severity
+
+
+@dataclass(frozen=True)
+class Options:
+    """What to leave out of an export. Defaults export everything as found."""
+
+    evidence: bool = True                       # False: drop the evidence field
+    ignored: frozenset[str] = frozenset()       # finding fingerprints to omit
+    # True: mask URL hosts (scheme kept, host -> <target>), query values, values of
+    # Authorization/Cookie/password/token/secret/api-key fields, and long mixed tokens
+    # Target note: with redact on, the host is masked in finding text (where/what/...)
+    # AND in the report header target, so an export shows e.g. https://<target>/path
+    # (scheme and path kept, host gone). Turn redact off to show the real target.
+    redact: bool = False
+
+
+_QUERY = re.compile(r"([?&][^=&#\s]+=)[^&#\s]*")
+# long run that mixes letters and digits; plain words/path segments don't match
+_TOKEN = re.compile(r"(?<![A-Za-z0-9_\-+=])(?=[A-Za-z_\-+=]*\d)(?=[0-9_\-+=]*[A-Za-z])"
+                    r"[A-Za-z0-9_\-+=]{16,}")
+# value after a secret-style field name, any length
+_FIELD = re.compile(r"(?i)\b(authorization|set-cookie|cookie|passw(?:or)?d|token|secret|api[_ -]?key)"
+                    r"(\"?\s*[:=]\s*\"?)[^\r\n&\"']+")
+_HOST = re.compile(r"([A-Za-z][A-Za-z0-9+.\-]*://)[^/?#\s\"']+")
+
+
+def _mask(s: str) -> str:
+    s = _HOST.sub(lambda m: m.group(1) + "<target>", s)  # hostname (and userinfo) masked
+    s = _QUERY.sub(lambda m: m.group(1) + "REDACTED", s)
+    s = _FIELD.sub(lambda m: m.group(1) + m.group(2) + "REDACTED", s)
+    return _TOKEN.sub(lambda m: m.group(0)[:4] + "***", s)
 
 
 @dataclass
@@ -18,6 +50,25 @@ class Report:
     finished: datetime | None = None
     tool_version: str = ""
     scanners_run: list[str] = field(default_factory=list)
+    options: Options = field(default_factory=Options)
+
+    def view(self, options: Options | None = None) -> "Report":
+        """A copy with the options applied; the original is never changed."""
+        o = options or self.options
+        out = []
+        for f in self.findings:
+            if f.fingerprint in o.ignored:
+                continue
+            ch = {}
+            if not o.evidence:
+                ch["evidence"] = ""
+            if o.redact:
+                for k in ("evidence", "where", "what", "how_to_check", "title"):
+                    ch[k] = _mask(ch.get(k, getattr(f, k)))
+                ch["references"] = [_mask(x) for x in f.references]
+            out.append(replace(f, **ch) if ch else f)
+        return replace(self, findings=out, options=Options(),
+                       target=_mask(self.target) if o.redact else self.target)
 
     def counts(self) -> dict[str, int]:
         """Findings per severity label, highest first — for the summary line."""
@@ -52,6 +103,9 @@ def demo() -> None:
     assert c["High"] == 1 and c["Low"] == 1 and c["Medium"] == 1
     assert r.total == 3 and r.fixed_count == 1
     assert "3 findings" in r.summary_line()
+    v = r.view(Options(ignored=frozenset({r.findings[0].fingerprint}), redact=True))
+    assert v.total == 2 and r.total == 3
+    assert _mask("https://x/a?token=abcdef1234567890XYZ") == "https://<target>/a?token=REDACTED"
     print("report.py: ok")
 
 

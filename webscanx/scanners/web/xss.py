@@ -13,6 +13,7 @@ Stored / DOM XSS are out of scope this phase.
 
 from __future__ import annotations
 
+import re
 import uuid
 from urllib.parse import urlparse, parse_qsl, urlencode, urlunparse
 
@@ -34,8 +35,14 @@ def _marker() -> str:
     return f'{_SENTINEL}{uuid.uuid4().hex[:10]}>'
 
 
-def _reflected_unescaped(body: str, marker: str) -> bool:
-    return marker in body                      # verbatim = the <>"' were not encoded
+# Contexts where our marker (no closing tag, no --> ) stays inert text, not markup.
+_INERT = re.compile(r"<!--.*?-->|<(textarea|title|style)\b.*?</\1\s*>", re.I | re.S)
+
+
+def _reflected_unescaped(body: str, marker: str, ctype: str = "text/html") -> bool:
+    if "html" not in ctype.lower():            # JSON/plain/etc. is not rendered as HTML
+        return False
+    return marker in _INERT.sub("", body)      # verbatim outside inert contexts = exploitable
 
 
 def _finding(where: str, marker: str, body: str) -> Finding:
@@ -62,7 +69,7 @@ def _probe_url_param(url: str, name: str, timeout: float) -> Finding | None:
     q = [(k, marker if k == name else v) for k, v in parse_qsl(parts.query)]
     probe = urlunparse(parts._replace(query=urlencode(q)))
     resp = http.fetch(probe, timeout=timeout)
-    if resp.ok and _reflected_unescaped(resp.body, marker):
+    if resp.ok and _reflected_unescaped(resp.body, marker, resp.headers.get("content-type") or "text/html"):
         return _finding(f"{url} (param: {name})", marker, resp.body)
     return None
 
@@ -76,7 +83,7 @@ def _probe_form(form, timeout: float) -> Finding | None:
         resp = http.fetch(probe, timeout=timeout)
     else:
         resp = http.fetch(form.action_url, method="POST", data=data, timeout=timeout)
-    if resp.ok and _reflected_unescaped(resp.body, marker):
+    if resp.ok and _reflected_unescaped(resp.body, marker, resp.headers.get("content-type") or "text/html"):
         loc = f"{form.action_url} (form: {form.method})"
         return _finding(loc, marker, resp.body)
     return None
@@ -108,6 +115,9 @@ def demo() -> None:
     safe = vulnerable.replace('"', "&quot;").replace("<", "&lt;").replace(">", "&gt;")
     assert _reflected_unescaped(vulnerable, m)
     assert not _reflected_unescaped(safe, m), "encoded reflection must not flag"
+    assert not _reflected_unescaped(f"<textarea>{m}</textarea><!-- {m} -->", m), "inert contexts must not flag"
+    assert not _reflected_unescaped(vulnerable, m, "application/json"), "non-HTML must not flag"
+    assert _reflected_unescaped(f"<title>x</title><p>{m}</p>", m)
     assert m != _marker(), "each marker must be unique per call"
     f = _finding("http://x/?q=", m, vulnerable)
     assert f.severity.label == "High" and f.remediation and "CWE-79" in f.category

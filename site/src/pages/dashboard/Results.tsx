@@ -1,8 +1,9 @@
 import { useEffect, useState, type ReactNode } from "react";
 import { SCAN_META, SEV_COLORS, type Severity, type Finding } from "@/data/findings";
 import {
-  countsOf,
   findingsOf,
+  ignoreFinding,
+  isIgnored,
   isSampleData,
   restoreCurrentScan,
   useCurrentScan,
@@ -54,6 +55,7 @@ export default function Results() {
   const [filter, setFilter] = useState<Filter>("All");
   const [search, setSearch] = useState("");
   const [showExport, setShowExport] = useState(false);
+  const [, bump] = useState(0);
   const [activeTab, setActiveTab] = useState<DetailTab>("what");
 
   // Landing straight on this URL should still find the scan this tab started.
@@ -70,12 +72,14 @@ export default function Results() {
     setActiveTab("what");
   }
 
-  const all = findingsOf(job);
+  const all = findingsOf(job).filter((f) => !isIgnored(f.fingerprint));
   const sample = isSampleData(job);
-  const sev = countsOf(job);
+  // Counted from the list after ignored findings are removed. The ignore set is
+  // in memory only (not persisted), so it resets on reload.
+  const n = (s: Severity) => all.filter((f) => f.severity === s).length;
   const counts = {
-    critical: sev.CRITICAL, high: sev.HIGH, medium: sev.MEDIUM,
-    low: sev.LOW, info: sev.INFO,
+    critical: n("CRITICAL"), high: n("HIGH"), medium: n("MEDIUM"),
+    low: n("LOW"), info: n("INFO"),
   };
   const TOTAL = all.length || 1;
 
@@ -343,7 +347,11 @@ export default function Results() {
             <button className="mono text-[11px] border border-[#1e1c1c] px-3 py-1.5 text-[#535050] hover:text-[#f0eeed] hover:border-[#2a2828] transition-colors duration-150">
               Mark seen
             </button>
-            <button className="mono text-[11px] px-3 py-1.5 text-[#3a3836] hover:text-[#535050] transition-colors duration-150">
+            <button
+              disabled={!sel.fingerprint}
+              onClick={() => { ignoreFinding(sel.fingerprint!); bump((n) => n + 1); }}
+              className="mono text-[11px] px-3 py-1.5 text-[#3a3836] hover:text-[#535050] transition-colors duration-150 disabled:opacity-40"
+            >
               Ignore
             </button>
           </div>

@@ -3,16 +3,8 @@ import CopyButton from "@/components/CopyButton";
 import SevPill from "@/components/SevPill";
 import { FINDINGS, SCAN_META, SEV_COLORS, type Finding } from "@/data/findings";
 
-type Platform = "win" | "mac" | "linux";
 
-const platformData: Record<Platform, { label: string; meta: string; exe: string; size: string; checksum: string }> = {
-  win: { label: "Download for Windows", meta: "v1.0 · 24 MB (.exe)", exe: ".exe", size: "24 MB · Windows 10/11", checksum: "8f4b2a67e1093120b6017b29e0992389104c8f4b2a67e109" },
-  mac: { label: "Download for macOS", meta: "v1.0 · 28 MB (.dmg)", exe: ".dmg", size: "28 MB · Apple Silicon + Intel", checksum: "3c7a188ffa8200192837bc9012384a823c7a188ffa82" },
-  linux: { label: "Download for Linux", meta: "v1.0 · 22 MB (.AppImage)", exe: ".AppImage", size: "22 MB · x86_64", checksum: "d5a26ba677b189283749281728392019d5a26ba677b1" },
-};
-
-function Nav({ platform }: { platform: Platform; setPlatform: (p: Platform) => void }) {
-  void platform;
+function Nav() {
   return (
     <header className="fixed top-0 left-0 right-0 z-40 bg-[#0d0c0c]/85 backdrop-blur-md border-b border-[#2a2828]/50">
       <div className="max-w-[1200px] mx-auto px-6 h-16 flex items-center justify-between">
@@ -27,15 +19,14 @@ function Nav({ platform }: { platform: Platform; setPlatform: (p: Platform) => v
           <a href="https://github.com" target="_blank" rel="noreferrer" className="hover:text-[#f2f0ef] transition-colors">GitHub</a>
         </nav>
         <a href="#download" className="inline-flex items-center justify-center bg-[#22d3a6] text-[#0d0c0c] font-semibold text-xs tracking-wider uppercase px-4 py-2 hover:bg-[#20c298] transition-colors whitespace-nowrap">
-          Download
+          Get started
         </a>
       </div>
     </header>
   );
 }
 
-function Hero({ platform, setPlatform }: { platform: Platform; setPlatform: (p: Platform) => void }) {
-  const d = platformData[platform];
+function Hero() {
   return (
     <section className="relative min-h-[calc(100vh-4rem)] flex flex-col items-center justify-start pt-24 pb-12 overflow-hidden">
       <div className="absolute inset-0 pointer-events-none hero-haze" />
@@ -47,16 +38,16 @@ function Hero({ platform, setPlatform }: { platform: Platform; setPlatform: (p: 
           <span className="text-[#9a9695]">before they do.</span>
         </h1>
         <p className="text-lg sm:text-xl text-[#9a9695] max-w-[560px] font-normal leading-relaxed mb-10">
-          A local scanner that finds web vulnerabilities and explains each one in plain language. Nothing leaves your device.
+          A local scanner that finds web vulnerabilities and explains each one in plain language. Scan data stays on this machine; the scanner contacts only the target you authorise.
         </p>
 
         <div className="flex flex-col items-center gap-4 mb-16">
           <div className="flex flex-wrap items-center justify-center gap-4">
             <div className="flex items-center gap-3">
               <a href="#download" className="inline-flex items-center justify-center bg-[#22d3a6] text-[#0d0c0c] font-semibold text-sm tracking-wide px-6 py-3.5 hover:bg-[#20c298] transition-colors whitespace-nowrap">
-                {d.label}
+                Run it locally
               </a>
-              <span className="mono text-xs text-[#9a9695] tracking-tight">{d.meta}</span>
+              <span className="mono text-xs text-[#9a9695] tracking-tight">Python 3.10+ · stdlib only</span>
             </div>
             <a
               href="#/dashboard/new-scan"
@@ -65,18 +56,6 @@ function Hero({ platform, setPlatform }: { platform: Platform; setPlatform: (p: 
               <span>Try the dashboard</span>
               <span className="group-hover:translate-x-1 transition-transform">→</span>
             </a>
-          </div>
-          <div className="flex items-center gap-1.5 p-1 bg-[#151414] border border-[#2a2828] mono text-[11px]">
-            <span className="text-[#605d5d] px-2 py-0.5">Platform:</span>
-            {(["win", "mac", "linux"] as Platform[]).map((p) => (
-              <button
-                key={p}
-                onClick={() => setPlatform(p)}
-                className={`px-2.5 py-0.5 transition-colors ${platform === p ? "bg-[#1c1b1b] text-[#22d3a6] font-medium border border-[#2a2828]/80" : "text-[#9a9695] hover:text-[#f2f0ef]"}`}
-              >
-                {p === "win" ? "Windows" : p === "mac" ? "macOS" : "Linux"}
-              </button>
-            ))}
           </div>
         </div>
 
@@ -202,17 +181,17 @@ function HowItWorks() {
         <div className="pt-8 border-t border-[#2a2828] flex flex-col justify-between h-full">
           <div>
             <div className="mono text-2xl font-bold text-[#605d5d] mb-4">01</div>
-            <h3 className="text-2xl font-bold text-[#f2f0ef] mb-3">Download</h3>
+            <h3 className="text-2xl font-bold text-[#f2f0ef] mb-3">Start it</h3>
             <p className="text-base text-[#9a9695] leading-relaxed mb-8">
-              One file for your system, or pip install. Nothing else to install.
+              Run the local engine from the project folder. Nothing else to install.
             </p>
           </div>
           <div className="bg-[#151414] border border-[#2a2828] p-4 mono text-xs text-[#f2f0ef] flex items-center justify-between">
             <div className="flex items-center gap-2">
               <span className="text-[#9a9695]">$</span>
-              <span>webscanx start</span>
+              <span>python -m webscanx.server</span>
             </div>
-            <CopyButton text="webscanx start" />
+            <CopyButton text="python -m webscanx.server" />
           </div>
         </div>
 
@@ -394,7 +373,7 @@ function SampleReport() {
                     <p className="text-sm text-[#9a9695] leading-relaxed mb-3">{sel.howToCheck}</p>
                     <div className="bg-[#0d0c0c] border border-[#2a2828] px-3 py-2.5 mono text-xs text-[#f2f0ef] flex items-start justify-between gap-2">
                       <span className="break-all">{sel.checkCommand}</span>
-                      <CopyButton text={sel.checkCommand} className="shrink-0 mt-0.5" />
+                      <CopyButton text={sel.checkCommand ?? ""} className="shrink-0 mt-0.5" />
                     </div>
                   </div>
                   <div>
@@ -495,52 +474,20 @@ function WhyTrustIt() {
   );
 }
 
-function Download({ platform, setPlatform }: { platform: Platform; setPlatform: (p: Platform) => void }) {
-  const platforms: { key: Platform; name: string; meta: string }[] = [
-    { key: "win", name: "Windows", meta: ".exe · 24 MB · Windows 10/11" },
-    { key: "mac", name: "macOS", meta: ".dmg · 28 MB · Apple Silicon + Intel" },
-    { key: "linux", name: "Linux", meta: ".AppImage · 22 MB · x86_64" },
-  ];
+function Download() {
   return (
     <section id="download" className="py-20 sm:py-32 max-w-[1200px] mx-auto px-6">
       <div className="text-center mb-12">
-        <p className="mono text-xs tracking-widest text-[#9a9695] uppercase mb-4">DOWNLOAD</p>
-        <h2 className="text-4xl sm:text-[56px] font-bold tracking-tight text-[#f2f0ef]">Download WebScanX v1.0</h2>
+        <p className="mono text-xs tracking-widest text-[#9a9695] uppercase mb-4">GET STARTED</p>
+        <h2 className="text-4xl sm:text-[56px] font-bold tracking-tight text-[#f2f0ef]">Run WebScanX locally</h2>
       </div>
-
-      <div className="grid grid-cols-1 md:grid-cols-3 divide-y md:divide-y-0 md:divide-x divide-[#2a2828] border border-[#2a2828] mb-6">
-        {platforms.map(({ key, name, meta }) => {
-          const d = platformData[key];
-          return (
-            <div key={key} className="px-7 py-8 space-y-3">
-              <p className="text-[28px] font-bold text-[#f2f0ef]">{name}</p>
-              <p className="mono text-xs text-[#9a9695]">{meta}</p>
-              <button
-                onClick={() => setPlatform(key)}
-                className="inline-flex items-center justify-center bg-[#22d3a6] text-[#0d0c0c] font-semibold text-sm px-6 py-3 hover:bg-[#20c298] transition-colors w-full sm:w-auto"
-              >
-                Download {d.exe}
-              </button>
-              <div className="border-t border-[#2a2828] pt-3 flex items-center justify-between">
-                <p className="mono text-[11px] text-[#605d5d]">SHA-256 {d.checksum.slice(0, 16)}…</p>
-                <CopyButton text={d.checksum} />
-              </div>
-            </div>
-          );
-        })}
-      </div>
-
       <div className="flex flex-col items-center gap-4">
         <div className="bg-[#151414] border border-[#2a2828] px-4 py-2.5 mono text-sm text-[#f2f0ef] flex items-center gap-3">
           <span className="text-[#605d5d]">$</span>
-          <span>pip install <span className="font-semibold text-white">webscanx</span></span>
-          <CopyButton text="pip install webscanx" />
+          <span>python -m webscanx.server</span>
+          <CopyButton text="python -m webscanx.server" />
         </div>
-        <div className="flex flex-wrap gap-6 mono text-sm text-[#9a9695]">
-          <a href="#" className="hover:text-[#f2f0ef] transition-colors">Release notes</a>
-          <a href="#" className="hover:text-[#f2f0ef] transition-colors">Verify signature</a>
-          <a href="#" className="hover:text-[#f2f0ef] transition-colors">System requirements</a>
-        </div>
+        <p className="mono text-sm text-[#9a9695]">Then open http://127.0.0.1:8765</p>
       </div>
     </section>
   );
@@ -551,7 +498,7 @@ function Faq() {
     { q: "Does anything get uploaded?", a: "No. WebScanX runs entirely on your machine. HTTP requests go directly from your computer to the target. No data passes through WebScanX servers. The only outbound traffic is the scan itself." },
     { q: "Is it legal to scan a website?", a: "You may only scan websites, web services, or staging environments that you own or have explicit written authorization to test. WebScanX enforces an authorization gate before each scan." },
     { q: "Does it fix vulnerabilities?", a: "No. v1 finds and explains each issue and shows you how to fix it yourself. It never changes your site." },
-    { q: "What does it need to run?", a: "The standalone binary needs nothing. The pip package requires Python 3.9+. No browser, no Docker, no database." },
+    { q: "What does it need to run?", a: "Python 3.10+ and nothing else. No browser, no Docker, no database." },
     { q: "Is it free?", a: "Yes. WebScanX v1 is free and open source under the MIT license." },
   ];
   return (
@@ -575,6 +522,8 @@ function Faq() {
   );
 }
 
+const soon = ["Security policy", "License", "Responsible use", "Privacy"]; // no pages yet
+
 function Footer() {
   return (
     <footer className="border-t border-[#2a2828] pt-16 pb-0 max-w-[1200px] mx-auto px-6 overflow-hidden">
@@ -584,14 +533,16 @@ function Footer() {
           <p className="text-sm text-[#9a9695]">Local web vulnerability scanner.</p>
         </div>
         {[
-          { label: "PRODUCT", links: ["Download", "Docs", "Sample report", "Dashboard demo"] },
+          { label: "PRODUCT", links: ["Get started", "Docs", "Sample report", "Dashboard demo"] },
           { label: "PROJECT", links: ["GitHub", "Security policy", "License"] },
           { label: "LEGAL", links: ["Responsible use", "Privacy"] },
         ].map((col) => (
           <div key={col.label} className="w-[180px] space-y-2">
             <p className="mono text-[11px] font-medium text-[#605d5d]">{col.label}</p>
             {col.links.map((l) => (
-              <p key={l} className="text-sm text-[#9a9695] hover:text-[#f2f0ef] cursor-pointer transition-colors">{l}</p>
+              soon.includes(l)
+                ? <p key={l} title="Coming soon" aria-label={`${l} (coming soon)`} className="text-sm text-[#605d5d] cursor-default">{l}</p>
+                : <p key={l} className="text-sm text-[#9a9695] hover:text-[#f2f0ef] cursor-pointer transition-colors">{l}</p>
             ))}
           </div>
         ))}
@@ -607,19 +558,18 @@ function Footer() {
 }
 
 export default function ShopPage() {
-  const [platform, setPlatform] = useState<Platform>("win");
 
   return (
     <div className="bg-[#0b0a0a] min-h-screen text-[#f0eeed]">
-      <Nav platform={platform} setPlatform={setPlatform} />
+      <Nav />
       <main className="relative z-10 pt-16">
-        <Hero platform={platform} setPlatform={setPlatform} />
+        <Hero />
         <Statement />
         <HowItWorks />
         <SampleReport />
         <WhatItChecks />
         <WhyTrustIt />
-        <Download platform={platform} setPlatform={setPlatform} />
+        <Download />
         <Faq />
         <Footer />
       </main>

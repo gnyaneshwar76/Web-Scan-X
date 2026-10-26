@@ -10,6 +10,7 @@ from __future__ import annotations
 from ...core.engine import register
 from ...core.finding import Finding
 from ...core.target import TargetKind
+from .cookies import _mask
 from .crawler import get_sitemap
 
 # header -> (severity, what, how_to_check, fix)
@@ -75,7 +76,7 @@ def _cookie_findings(where: str, set_cookie: list[str]):
                  f"flag(s), leaving it exposed to theft or cross-site sending.",
             how_to_check="Inspect the Set-Cookie response header for this cookie "
                          "and confirm the flags are absent.",
-            evidence=f"Set-Cookie: {raw}",
+            evidence=_mask(raw),
             remediation="Set Secure and HttpOnly on session cookies, and "
                         "SameSite=Lax or Strict to limit cross-site sending.",
             category=_CAT, references=_REFS,
@@ -113,7 +114,7 @@ def demo() -> None:
     ctx = SimpleNamespace(cache={}, timeout=5.0, aggressive=False, only=set())
     page = Page(url="https://site.test/", status=200,
                 headers={"content-type": "text/html"},       # no security headers
-                set_cookie=["sid=abc; Path=/"])              # no flags
+                set_cookie=["sid=SECRET1; Path=/"])          # no flags
     ctx.cache["sitemap"] = Sitemap(root="https://site.test/", pages=[page])
     target = SimpleNamespace(location="https://site.test/", kind=TargetKind.WEB)
 
@@ -123,6 +124,7 @@ def demo() -> None:
     assert any("strict-transport-security" in t for t in titles)
     assert any("sid" in t and "Secure" in t for t in titles), titles
     assert all(f.remediation for f in found), "every finding must carry a fix"
+    assert all("SECRET1" not in (f.evidence or "") for f in found)
 
     # Over plain HTTP, HSTS is not flagged (only meaningful on HTTPS).
     page.url = "http://site.test/"

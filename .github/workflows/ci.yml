@@ -1,0 +1,40 @@
+name: ci
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ${{ matrix.os }}
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+    steps:
+      # actions pinned by tag (commit SHAs not known here); pin to SHAs when convenient
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - run: python -m unittest discover -s tests -t .
+      - name: CLI smoke test against the demo fixture (127.0.0.1 only)
+        shell: bash
+        run: |
+          python tools/demo_target.py --port 8765 &
+          sleep 2
+          # exit 2/1 = findings (expected on the vulnerable fixture); 3+ = real error
+          set +e
+          python -m webscanx http://127.0.0.1:8765/ -y -f json -o smoke
+          rc=$?
+          kill %1 || true
+          test "$rc" -le 2 && test -s smoke.json
+  site:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: pnpm/action-setup@v4
+        with:
+          version: 9
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "20"
+      - run: pnpm install --frozen-lockfile && pnpm run build
+        working-directory: site

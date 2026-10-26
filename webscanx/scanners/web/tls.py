@@ -30,9 +30,12 @@ def _peer_cert(host: str, port: int, timeout: float):
     """Return the validated peer certificate dict, or None if it can't be got."""
     ctx = ssl.create_default_context()
     try:
-        with socket.create_connection((host, port), timeout=timeout) as sock:
+        ip = http.resolve_checked(host, port)   # vetted once; connect to it, no re-resolve
+        with socket.create_connection((ip, port), timeout=timeout) as sock:
             with ctx.wrap_socket(sock, server_hostname=host) as ssock:
                 return ssock.getpeercert()
+    except http.Blocked:
+        raise                           # scan() skips TLS checks for refused hosts
     except Exception:
         return None
 
@@ -48,7 +51,8 @@ def _weak_protocol_accepted(host: str, port: int, version, timeout: float) -> bo
     except ValueError:
         return False                    # this Python build can't offer that version
     try:
-        with socket.create_connection((host, port), timeout=timeout) as sock:
+        ip = http.resolve_checked(host, port)
+        with socket.create_connection((ip, port), timeout=timeout) as sock:
             with ctx.wrap_socket(sock, server_hostname=host):
                 return True
     except Exception:
@@ -86,7 +90,10 @@ def scan(target, ctx):
     port = parts.port or 443
 
     # 2. Certificate: reachable + not expired.
-    cert = _peer_cert(host, port, ctx.timeout)
+    try:
+        cert = _peer_cert(host, port, ctx.timeout)
+    except http.Blocked:
+        return                          # SSRF guard refused: no TLS finding
     if cert is None:
         yield Finding(
             title="TLS certificate could not be validated", severity="high",

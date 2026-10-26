@@ -9,8 +9,15 @@ import { useEffect, useState } from "react";
 
 import { FINDINGS, type Finding, type Severity } from "./findings";
 
-export const API_BASE =
-  (import.meta as any).env?.VITE_WEBSCANX_API ?? "http://127.0.0.1:8765";
+const env = (import.meta as any).env ?? {};
+// Same-origin when the engine serves this page (site/dist); the Vite dev/preview
+// servers and file:// have no API, so they talk to the engine's default port.
+const servedByEngine =
+  !env.DEV &&
+  /^https?:$/.test(location.protocol) &&
+  location.port !== "4173";
+export const API_BASE: string =
+  env.VITE_WEBSCANX_API ?? (servedByEngine ? "" : "http://127.0.0.1:8765");
 
 export type ScanState = "running" | "done" | "error";
 
@@ -97,8 +104,24 @@ export async function listScans(): Promise<ScanJob[]> {
   return scans;
 }
 
-export function reportUrl(id: string, format: string): string {
-  return `${API_BASE}/api/scan/${id}/report?format=${encodeURIComponent(format)}`;
+export type ReportOpts = {
+  evidence?: boolean;
+  /** Include findings the user ignored. When false, they are sent as ignored=. */
+  includeIgnored?: boolean;
+  redact?: boolean;
+};
+
+// Fingerprints ignored in this tab (memory only, nothing is written to disk).
+const ignored = new Set<string>();
+export const ignoreFinding = (fp: string) => void ignored.add(fp);
+export const isIgnored = (fp?: string) => !!fp && ignored.has(fp);
+
+export function reportUrl(id: string, format: string, o: ReportOpts = {}): string {
+  const q = new URLSearchParams({ format });
+  if (o.evidence === false) q.set("evidence", "0");
+  if (o.redact) q.set("redact", "1");
+  if (!o.includeIgnored && ignored.size) q.set("ignored", [...ignored].join(","));
+  return `${API_BASE}/api/scan/${id}/report?${q}`;
 }
 
 /* --------------------------------------------------------- current scan */

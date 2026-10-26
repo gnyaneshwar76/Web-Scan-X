@@ -18,7 +18,10 @@ export type Finding = {
   status: Status;
   what: string;
   howToCheck: string;
-  checkCommand: string;
+  /** Stable id from the engine (live scans only). */
+  fingerprint?: string;
+  /** Filled by the server for web findings; may be empty. */
+  checkCommand?: string;
   evidence: string;
   fix: string;
   refs: string;

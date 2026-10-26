@@ -4,7 +4,7 @@ RULE: after every response, the General Manager adds a dated entry below and upd
 
 ## STATE (update every time)
 - **Updated:** 26 Oct 2026. Nothing committed yet; plan agreed (web launch first, then PHP/JS rules, AI helper A, Android).
-- **Repo:** E:\WebScanX, github.com/gnyaneshwar76/Web-Scan-X, branch main. All new work is UNCOMMITTED and NOT pushed.
+- **Repo:** E:WebScanX, github.com/gnyaneshwar76/Web-Scan-X. Work committed locally on branch agent-fixes-oct (56af56e), NOT pushed; main unchanged at 9196a1d.
 - **Engine:** Python, stdlib only, 15 web + 4 code scanners. Tests: `python tests/test_spine.py` plus tests/test_fixture2.py, test_server_limits.py, test_report_options.py. All passed at the Manager's check.
 - **Site:** site/ (React + Vite). Build not yet verified (node_modules incomplete; needs the owner's OK for `npm ci`).
 - **Team:** 13 agents in `.claude/agents/` (manager, api, detect, report, ui, pack, test, reviewer, verify, security, laws, policy, privacy), ownership in `.claude/team/OWNERS.md`, handoff in `.claude/team/HANDOFF.md`.
@@ -58,6 +58,8 @@ Licence (MIT/Apache/AGPL); operator name, jurisdiction, contact email; hosted do
 - **26 Oct (2):** owner said start the work. Agent Office running (4747), desks seated. Sent the "fix" order to the WebScanX agent team section: blockers 5 SSRF, 6 self-host fonts + true wording, 7 cookie masking/redact, 8 server input bounds, 4 one authorization sentence; plus --only error, remove fake History, tests. Held back 1 install path, 2 LICENSE, 3 documents (need owner decisions). No commit/push/npm install.
 
 - **26 Oct (3):** fix round finished (manager report relayed). I re-ran the tests myself: 41 run, OK. Stash list empty. Still uncommitted (47 changed/new files). Open: install path, LICENSE, documents, API token, CSP, real font files, UI build (needs pnpm install yes), site/src/imports delete (needs yes), SHA-pinned CI, Figma redo, lawyer check.
+
+- **26 Oct (4):** owner said "go on"; committed all work on a new branch agent-fixes-oct (56af56e, 62 files), using the repo's existing author identity for this commit only (git identity is not set on this laptop). Added .claude/data/ (plugin database) to .gitignore. Not pushed, not merged into main.
 
 ## NEXT STEPS
 1. Owner says "draft" and/or "fix" (and answers the open decisions).

@@ -11,4 +11,4 @@ for now these checks only find and explain.
 """
 
 from . import walker  # noqa: F401  (shared source-tree walk)
-from . import secrets, injection, crypto, config  # noqa: F401  (import = register)
+from . import secrets, injection, injection_web, crypto, config  # noqa: F401  (import = register)

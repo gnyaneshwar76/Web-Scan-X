@@ -22,7 +22,7 @@ _SKIP_DIRS = {".git", ".hg", ".svn", "node_modules", ".venv", "venv", "env",
 # Extensions worth reading as source. Everything else is skipped as non-source.
 _SOURCE_EXTS = {
     ".py", ".pyw", ".js", ".jsx", ".ts", ".tsx", ".mjs", ".cjs", ".java",
-    ".rb", ".php", ".go", ".rs", ".c", ".h", ".cpp", ".cc", ".hpp", ".cs",
+    ".rb", ".php", ".phtml", ".jsp", ".jspx", ".go", ".rs", ".c", ".h", ".cpp", ".cc", ".hpp", ".cs",
     ".kt", ".kts", ".swift", ".scala", ".sh", ".bash", ".pl", ".pm",
     ".sql", ".html", ".htm", ".vue", ".svelte", ".env", ".ini", ".cfg",
     ".conf", ".yml", ".yaml", ".toml", ".json", ".xml", ".properties",

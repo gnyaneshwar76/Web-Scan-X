@@ -49,5 +49,5 @@ Running record: docs/PROJECT-LOG.md. Update it after every response and read it 
 ## Current state (26 Oct 2026) - read docs/PROJECT-LOG.md for details
 - Team is now 15 agents: the 13 above plus `binary` (app-package scanners) and `ai` (optional AI helper).
 - On main and pushed: server hardening, SSRF guard, API token, security headers, report split + PDF + redaction, MIT LICENSE, install steps, DRAFT legal docs.
-- Done and pushed: phases 0 and 2-4 (Android/iPhone/Windows/Mac static checks) + AI helper, security-review fixes (60 tests OK). Phase 1 (code-language rules) skipped: a safety filter stopped that work order; do not retry it in the same form.
+- Done and pushed: phases 0 and 2-4 (Android/iPhone/Windows/Mac static checks) + AI helper, security-review fixes (60 tests OK). Phase 1 (PHP/JSP code rules) done 27 Oct in code/injection_web.py.
 - Owner still to do: fill legal placeholders (contact email, jurisdiction, response days), lawyer review, redo site/FIGMA-REDO.md in Figma Make.

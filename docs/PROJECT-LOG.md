@@ -69,6 +69,10 @@ Licence (MIT/Apache/AGPL); operator name, jurisdiction, contact email; hosted do
 
 - **26 Oct (8) - phases 0-4 + AI (DONE, committed + pushed to main):** Phase 1 (code-language rules) SKIPPED: an automatic safety filter stopped that work order; do not retry it in the same form. Built: phase 0 (target.py knows apk/aab/ipa/exe/dll/msi/sys/pkg/dmg and .app folders; CLI/server accept file targets, authorized needed for every non-code kind); webscanx/scanners/app/ = _safe.py (GM, capped zip/file reader, regular files only), android.py + _axml.py, apple.py + _macho.py (ipa, .app, .pkg, .dmg note), windows.py (PE flags, msi signature); webscanx/ai/ (enrich, plan_scanners, extra_urls; Ollama local / Anthropic cloud opt-in, redacted); report.ai rendered in all formats; CLI --ai/--ai-model/--ai-plan; UI target-type choice, AI panel, Settings AI, honest Shop text; docs updated (README, PRIVACY, SECURITY, TERMS, AUP). Tests: 59 OK before the security fixes. Security review found 2 high (AXML pool memory blow-up, quadratic regex in iOS profile) + mediums; fixes running in two agents (binary; api+detect: extra_seeds wired, scanners_run accurate, authorized before file checks, UNC paths refused, AI JSON cleaned, aiModel limited). Both fix agents finished (all review items fixed). Final check: 60 tests OK, site build OK, ci.yml present, no stray processes. FIFO checks only run where mkfifo exists (unverified on Windows).
 
+- **26 Oct (9):** owner at 92% of the 5-hour limit; stopped all work. Nothing running, everything pushed (7c011c7).
+
+- **27 Oct:** owner said carry on (after limit reset). Browser click-through done: dashboard served by the engine on a test port loads with the new target-type and AI-helper choices; a real scan of the local demo target started from the screen, completed (headers/tls/csp) and Results showed 1 High, 2 Medium, 3 Low. Servers stopped. Not tested in a browser: app-file scan, AI panel with a real model, Export. Phase 1 still skipped.
+
 ## NEXT STEPS
 0. Owner fills legal placeholders and gets a lawyer review; redo site/FIGMA-REDO.md in Figma Make.
 1. Owner says "draft" and/or "fix" (and answers the open decisions).

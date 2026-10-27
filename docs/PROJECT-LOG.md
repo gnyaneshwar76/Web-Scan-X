@@ -3,13 +3,13 @@
 RULE: after every response, the General Manager adds a dated entry below and updates the STATE block. Anyone (any chat, any agent) should read this file first. Nothing here is committed unless the owner says so.
 
 ## STATE (update every time)
-- **Updated:** 26 Oct 2026, evening. READ THIS FILE FIRST; do not re-read the whole repo.
-- **Repo:** E:WebScanX, github.com/gnyaneshwar76/Web-Scan-X. All work merged into main and pushed (26 Oct).
-- **Engine:** Python, stdlib only, 15 web + 4 code scanners. Tests: `python tests/test_spine.py` plus tests/test_fixture2.py, test_server_limits.py, test_report_options.py. All passed at the Manager's check.
+- **Updated:** 27 Oct 2026. ALL PLANNED WORK DONE AND PUSHED. Details: docs/FINAL-REPORT.md. READ THIS FILE FIRST; do not re-read the whole repo.
+- **Repo:** E:\WebScanX, github.com/gnyaneshwar76/Web-Scan-X, branch main, everything pushed.
+- **Engine:** Python, stdlib only. Web: 15 scanners. Code: secrets, injection, injection_web (PHP/JSP), crypto, config. Apps: app.android, app.ios, app.macos, app.windows (static only). Optional AI helper (webscanx/ai). 60 tests via `python -m unittest discover -s tests`.
 - **Site:** site/ builds (pnpm 9.15.9, deps installed 26 Oct). Build step needed before the server can serve the UI.
-- **Team:** 13 agents in `.claude/agents/` (manager, api, detect, report, ui, pack, test, reviewer, verify, security, laws, policy, privacy), ownership in `.claude/team/OWNERS.md`, handoff in `.claude/team/HANDOFF.md`.
+- **Team:** 15 agents in `.claude/agents/` (manager, api, detect, report, ui, pack, test, reviewer, verify, security, laws, policy, privacy, binary, ai); ownership `.claude/team/OWNERS.md`; handoff `.claude/team/HANDOFF.md`.
 - **Sections (chats):** "Webscanx" = this chat, where the owner talks. "WebScanX agent team" = the new section that runs the agents. Messages go between them with SendMessage; the owner mostly talks here only.
-- **Waiting for the owner:** the word "draft" (security, laws, policy, privacy write their documents) and/or "fix" (owners fix the launch blockers), plus the decisions listed under OPEN DECISIONS.
+- **Waiting for the owner:** his own testing; fill legal placeholders (contact email, jurisdiction, response days); lawyer review of the DRAFT legal docs; redo site/FIGMA-REDO.md in Figma Make; decide how to publish (GitHub only today).
 - **Limit note:** the owner's usage limit is the 5-hour one and resets about 2 hours after hitting it. Keep work light, Sonnet only.
 
 ## LAUNCH CHECKLIST (from the 6 reviews, merged by the Manager)
